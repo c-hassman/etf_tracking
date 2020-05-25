@@ -40,3 +40,15 @@ qplot(data$DATE, (data$etf_asset_error * 100), geom='line') + theme_bw() +
   ylab('Error (%)') + xlab('') + ylim(-7,5)
 
 TE1 <- sum(abs(data$etf_asset_error)) / nrow(data)
+
+#------------Dummy-----------------------------------------#
+
+model <- lm(abs(data$etf_asset_error) ~ abs(data$per_etf_return) + data$`C WASDE` + data$`C WASDE + CP` + data$`C Grain Stocks` +
+              data$`C Prospective Plantings` + data$`C Acreage Report` + data$`C Cattle on Feed` +
+              data$`C Hogs & Pigs` + data$`C Day Before Roll` + data$`C Day After Roll` +
+              data$`C Feb` + data$`C Mar` + data$`C April` + data$`C May` + data$`C June` +
+              data$`C July` + data$`C Aug` + data$`C Sept` + data$`C Oct` + data$`C Nov` +
+              data$`C Dec` + data$`C 2012` + data$`C 2013` + data$`C 2014` + data$`C 2015` +
+              data$`C 2017`, 
+            data = data)
+summary(model)
