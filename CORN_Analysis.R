@@ -31,6 +31,6 @@ CORN <- na.omit(CORN) #Omit the rows with NAs, which are the final roll days
 #-----------------------Exploratory Plots-----------------------#
 qplot(CORN$DATE, (CORN$etf_asset_error * 100), geom = 'line') + theme_bw() +
   ggtitle('Daily Return Error: CORN ETF - Asset Basket') +
-  ylab('Error (%)')
+  ylab('Error (%)') + xlab("Date")
 
 
