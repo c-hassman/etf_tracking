@@ -27,6 +27,18 @@ USO$etf_asset_error <- USO$per_ETF_return - USO$per_asset_return
 USO <- na.omit(USO)
 
 #---------------------Exploratory Plots--------------------------------------#
+#------ETF, Asset Basket Error
 qplot(USO$DATE, (USO$etf_asset_error * 100), geom = 'line') + theme_bw() +
   ggtitle("Daily Return Error: USO ETF - Asset Basket") + ylab("Error (%)") +
   xlab("Date")
+#-----ETF and Asset Basket
+etfcolor <- "black"
+assetcolor <- "darkgrey"
+coeff <- USO$Futures[1]/USO$USO_MID[1]
+ggplot(data = USO, aes(x = DATE)) +
+  geom_line(aes(y = USO_MID), color = etfcolor) +
+  geom_line(aes(y = Futures / coeff), color = assetcolor) +
+  scale_y_continuous(
+    name = 'ETF Price ($)',
+    sec.axis = sec_axis(~.*coeff, name = "Asset Basket ($ per Barrel")
+  ) + theme_bw() + ggtitle("USO ETF and Asset Basket Price") + xlab("Date")
