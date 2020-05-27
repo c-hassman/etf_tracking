@@ -28,7 +28,18 @@ WEAT$etf_asset_error <- WEAT$per_ETF_return - WEAT$per_asset_return #calculate p
 WEAT <- na.omit(WEAT) #Omit Rows with NAs
 
 #---------------------Exploratory Plots--------------------------#
+#------ETF, Asset Basket Error
 qplot(WEAT$DATE, (WEAT$etf_asset_error * 100), geom = 'line') + theme_bw() +
   ggtitle("Daily Return Error: WEAT ETF - Asset Basket") + ylab("Error (%)") +
   xlab("Date")
-  
+#-----ETF and Asset Basket 
+etfcolor <- "black"
+assetcolor <- "darkgrey"
+coeff <- WEAT$asset_basket[1] / WEAT$WEAT_MID[1]
+ggplot(data = WEAT, aes(x = DATE)) +
+  geom_line(aes(y = WEAT_MID), color = etfcolor) +
+  geom_line(aes(y = asset_basket / coeff), color = assetcolor) +
+  scale_y_continuous(
+    name = 'ETF Price ($)', 
+    sec.axis = sec_axis(~.*coeff, name = "Asset Basket Price (cents per bushel)")
+  ) + theme_bw() + ggtitle('WEAT ETF and Asset Basket Price')
