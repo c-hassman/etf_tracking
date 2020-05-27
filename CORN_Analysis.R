@@ -44,3 +44,6 @@ ggplot(data = CORN, aes(x = DATE)) +
     name = "ETF Price ($)", 
     sec.axis = sec_axis(~.*coeff, name = "Asset Basket Price (cents per bushel")
   ) + theme_bw() + ggtitle("CORN ETF and Asset Basket Price") + xlab("Date") 
+#----Premium/Discount to NAV
+qplot(CORN$DATE, ((CORN$CORN_MID - CORN$CORN_NAV)/CORN$CORN_NAV * 100), geom = 'line') +
+  theme_bw() + ylab("Premium/Discount (%)") + xlab("Date") + ggtitle("CORN Premium/Discount to NAV")

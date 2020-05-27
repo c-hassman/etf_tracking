@@ -41,4 +41,6 @@ ggplot(data = UGA, aes(x = DATE)) +
     name = 'ETF Price ($)',
     sec.axis = sec_axis(~.*coeff, name = "Asset Basket Price (Dollars per Gallon)")
 ) + theme_bw() + ggtitle("UGA ETF and Asset Basket Price") + xlab("Date") 
-
+#----Premium/Discount to NAV
+qplot(UGA$DATE, ((UGA$UGA_MID - UGA$UGA_NAV)/UGA$UGA_NAV * 100), geom = 'line') +
+  theme_bw() + ylab("Premium/Discount (%)") + xlab("Date") + ggtitle("UGA Premium/Discount to NAV")

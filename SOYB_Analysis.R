@@ -43,5 +43,7 @@ ggplot(data = SOYB, aes(x = DATE)) +
     name = 'ETF Price ($)',
     sec.axis = sec_axis(~.*coeff, name = "Asset Basket Price (cents per bushel)")
   ) + theme_bw() + ggtitle("SOYB ETF and Asset Basket Price") + xlab("Date") 
-
+#----Premium/Discount to NAV
+qplot(SOYB$DATE, ((SOYB$SOYB_MID - SOYB$SOYB_NAV)/SOYB$SOYB_NAV * 100), geom = 'line') +
+  theme_bw() + ylab("Premium/Discount (%)") + xlab("Date") + ggtitle("SOYB Premium/Discount to NAV")
 
