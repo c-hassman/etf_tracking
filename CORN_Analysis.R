@@ -29,8 +29,18 @@ CORN$etf_asset_error <- CORN$per_ETF_return - CORN$per_asset_return #calculate e
 CORN <- na.omit(CORN) #Omit the rows with NAs, which are the final roll days
 
 #-----------------------Exploratory Plots-----------------------#
+#------ETF, Asset Basket Error
 qplot(CORN$DATE, (CORN$etf_asset_error * 100), geom = 'line') + theme_bw() +
   ggtitle('Daily Return Error: CORN ETF - Asset Basket') +
   ylab('Error (%)') + xlab("Date")
-
-
+#-----ETF and Asset Basket 
+etfcolor <- "black"
+assetcolor <- "darkgrey"
+coeff <- CORN$asset_basket[1] / CORN$CORN_MID[1]
+ggplot(data = CORN, aes(x = DATE)) +
+  geom_line(aes(y = CORN_MID), color = etfcolor) +
+  geom_line(aes(y = asset_basket / coeff), color = assetcolor) +
+  scale_y_continuous(
+    name = "ETF Price ($)", 
+    sec.axis = sec_axis(~.*coeff, name = "Asset Basket Price (cents per bushel")
+  ) + theme_bw() + ggtitle("CORN ETF and Asset Basket Price") + xlab("Date") 
