@@ -26,8 +26,22 @@ SOYB$per_ETF_return <- log(SOYB$SOYB_MID / lag(SOYB$SOYB_MID))
 SOYB$per_NAV_return <- log(SOYB$SOYB_NAV / lag(SOYB$SOYB_NAV))
 SOYB$etf_asset_error <- SOYB$per_ETF_return - SOYB$per_asset_return
 SOYB <- na.omit(SOYB)
+
 #---------------------Exploratory Plots--------------------------------------#
+#------ETF, Asset Basket Error
 qplot(SOYB$DATE, (SOYB$etf_asset_error * 100), geom = 'line') + theme_bw() +
   ggtitle("Daily Return Error: SOYB ETF - Asset Basket") + ylab("Error (%)") +
   xlab("Date")
+#-----ETF and Asset Basket 
+etfcolor <- "black"
+assetcolor <- "darkgrey"
+coeff <- SOYB$asset_basket[1]/SOYB$SOYB_MID[1]
+ggplot(data = SOYB, aes(x = DATE)) +
+  geom_line(aes(y = SOYB_MID), color = etfcolor) +
+  geom_line(aes(y = asset_basket / coeff), color = assetcolor) +
+  scale_y_continuous(
+    name = 'ETF Price ($)',
+    sec.axis = sec_axis(~.*coeff, name = "Asset Basket Price (cents per bushel)")
+  ) + theme_bw() + ggtitle("SOYB ETF and Asset Basket Price") + xlab("Date") 
+
 
