@@ -52,3 +52,13 @@ qplot(WEAT$DATE, ((WEAT$WEAT_MID - WEAT$WEAT_NAV)/WEAT$WEAT_NAV * 100), geom = '
 #--------Simple
 simple <- lm(per_asset_return ~ per_ETF_return, data = WEAT)
 summary(simple)
+
+#--------Dummy
+model <- lm(abs(WEAT$etf_asset_error) ~ abs(WEAT$per_ETF_return) + WEAT$`W WASDE` + WEAT$`W WASDE + CP` +
+              WEAT$`W Grain Stocks` + WEAT$`W Prospective Plantings` + WEAT$`W Acreage Report` +
+              WEAT$`W Cattle on Feed` + WEAT$`W Hogs & Pigs` + WEAT$`W Day Before Roll` + WEAT$`W Day After Roll` +
+              WEAT$`W Feb` + WEAT$`W Mar` + WEAT$`W April` + WEAT$`W May` + WEAT$`W June` + 
+              WEAT$`W July` + WEAT$`W Aug` + WEAT$`W Sept` + WEAT$`W Oct` + WEAT$`W Nov` + WEAT$`W Dec` +
+              WEAT$`W 2013` + WEAT$`W 2014` + WEAT$`W 2015` + WEAT$`W 2016` + WEAT$`W 2017` +
+              WEAT$`W 2018` + WEAT$W2019 + WEAT$W2020)
+summary(model)

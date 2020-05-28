@@ -51,3 +51,12 @@ qplot(SOYB$DATE, ((SOYB$SOYB_MID - SOYB$SOYB_NAV)/SOYB$SOYB_NAV * 100), geom = '
 #--------Simple
 simple <- lm(per_asset_return ~ per_ETF_return, data = SOYB)
 summary(simple)
+
+#--------Dummy
+model <- lm(abs(SOYB$etf_asset_error) ~ abs(SOYB$per_ETF_return) + SOYB$`S WASDE` + SOYB$`S WASDE + CP` +
+              SOYB$`S Grain Stocks` + SOYB$`S Prospective Plantings` + SOYB$`S Acreage Report` + 
+              SOYB$`S Cattle on Feed` + SOYB$`S Hogs & Pigs` + SOYB$`S Day Before Roll` + SOYB$`S Day After Roll` +
+              SOYB$`C Feb` + SOYB$`C Mar` + SOYB$`C April` + SOYB$`C May` + SOYB$`C June` + SOYB$`C July` +
+              SOYB$`C Aug` + SOYB$`C Sept` + SOYB$`C Nov` + SOYB$`C Dec` + SOYB$`C 2013` + SOYB$`C 2014` +
+              SOYB$`C 2015` + SOYB$`C 2016` + SOYB$`C 2017` + SOYB$`C 2018` + SOYB$`C 2019` + SOYB$`C 2020`)
+summary(model)
