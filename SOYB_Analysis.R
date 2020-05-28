@@ -47,3 +47,7 @@ ggplot(data = SOYB, aes(x = DATE)) +
 qplot(SOYB$DATE, ((SOYB$SOYB_MID - SOYB$SOYB_NAV)/SOYB$SOYB_NAV * 100), geom = 'line') +
   theme_bw() + ylab("Premium/Discount (%)") + xlab("Date") + ggtitle("SOYB Premium/Discount to NAV")
 
+#-------------------OLS-----------------------------------------------#
+#--------Simple
+simple <- lm(per_asset_return ~ per_ETF_return, data = SOYB)
+summary(simple)

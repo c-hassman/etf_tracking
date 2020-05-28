@@ -44,3 +44,8 @@ ggplot(data = UGA, aes(x = DATE)) +
 #----Premium/Discount to NAV
 qplot(UGA$DATE, ((UGA$UGA_MID - UGA$UGA_NAV)/UGA$UGA_NAV * 100), geom = 'line') +
   theme_bw() + ylab("Premium/Discount (%)") + xlab("Date") + ggtitle("UGA Premium/Discount to NAV")
+
+#-------------------OLS-----------------------------------------------#
+#--------Simple
+simple <- lm(per_asset_return ~ per_ETF_return, data = UGA)
+summary(simple)

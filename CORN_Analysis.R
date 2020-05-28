@@ -47,3 +47,8 @@ ggplot(data = CORN, aes(x = DATE)) +
 #----Premium/Discount to NAV
 qplot(CORN$DATE, ((CORN$CORN_MID - CORN$CORN_NAV)/CORN$CORN_NAV * 100), geom = 'line') +
   theme_bw() + ylab("Premium/Discount (%)") + xlab("Date") + ggtitle("CORN Premium/Discount to NAV")
+#-------------------OLS-----------------------------------------------#
+#--------Simple
+simple <- lm(per_asset_return ~ per_ETF_return, data = CORN)
+summary(simple)
+

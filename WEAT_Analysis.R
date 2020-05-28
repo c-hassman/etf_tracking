@@ -46,3 +46,9 @@ ggplot(data = WEAT, aes(x = DATE)) +
 #----Premium/Discount to NAV
 qplot(WEAT$DATE, ((WEAT$WEAT_MID - WEAT$WEAT_NAV)/WEAT$WEAT_NAV * 100), geom = 'line') +
   theme_bw() + ylab("Premium/Discount (%)") + xlab("Date") + ggtitle("WEAT Premium/Discount to NAV")
+
+
+#-------------------OLS-----------------------------------------------#
+#--------Simple
+simple <- lm(per_asset_return ~ per_ETF_return, data = WEAT)
+summary(simple)

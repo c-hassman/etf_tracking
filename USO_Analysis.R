@@ -46,3 +46,7 @@ ggplot(data = USO, aes(x = DATE)) +
 qplot(USO$DATE, ((USO$USO_MID - USO$USO_NAV)/USO$USO_NAV * 100), geom = 'line') +
   theme_bw() + ylab("Premium/Discount (%)") + xlab("Date") + ggtitle("USO Premium/Discount to NAV")
 
+#-------------------OLS-----------------------------------------------#
+#--------Simple
+simple <- lm(per_asset_return ~ per_ETF_return, data = USO)
+summary(simple)
