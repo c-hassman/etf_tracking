@@ -63,6 +63,9 @@ model <- lm(abs(CORN$etf_asset_error) ~ abs(CORN$per_ETF_return) + CORN$`C WASDE
 summary(model)
 #---------------------GARCH----------------------------------------------#
 err_garch = tseries::garch(x = CORN$etf_asset_error, order = c(1,1))
-
 summary(err_garch)
 
+#_--------------------ACF and PACF Plots----------------------------------#
+CORN_Error <- CORN$etf_asset_error
+acf(CORN_Error)
+pacf(CORN_Error)

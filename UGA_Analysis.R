@@ -60,7 +60,11 @@ summary(model)
 
 #---------------------GARCH----------------------------------------------#
 err_garch = tseries::garch(x = UGA$etf_asset_error, order = c(1,1))
-
 summary(err_garch)              
-            
+
+#_--------------------ACF and PACF Plots----------------------------------#
+UGA_Error <- UGA$etf_asset_error
+acf(UGA_Error)
+pacf(UGA_Error)
+
               

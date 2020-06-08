@@ -65,5 +65,9 @@ summary(model)
 
 #---------------------GARCH----------------------------------------------#
 err_garch = tseries::garch(x = WEAT$etf_asset_error, order = c(1,1))
-
 summary(err_garch)
+
+#_--------------------ACF and PACF Plots----------------------------------#
+WEAT_Error <- WEAT$etf_asset_error
+acf(WEAT_Error)
+pacf(WEAT_Error)

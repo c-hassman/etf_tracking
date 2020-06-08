@@ -63,5 +63,9 @@ summary(model)
 
 #---------------------GARCH----------------------------------------------#
 err_garch = tseries::garch(x = SOYB$etf_asset_error, order = c(1,1))
-
 summary(err_garch)
+
+#_--------------------ACF and PACF Plots----------------------------------#
+SOYB_Error <- SOYB$etf_asset_error
+acf(SOYB_Error)
+pacf(SOYB_Error)

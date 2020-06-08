@@ -62,5 +62,9 @@ summary(model)
 
 #---------------------GARCH----------------------------------------------#
 err_garch = tseries::garch(x = USO$etf_asset_error, order = c(1,1))
-
 summary(err_garch)
+
+#_--------------------ACF and PACF Plots----------------------------------#
+USO_Error <- USO$etf_asset_error
+acf(USO_Error)
+pacf(USO_Error)
