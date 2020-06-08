@@ -62,3 +62,8 @@ model <- lm(abs(WEAT$etf_asset_error) ~ abs(WEAT$per_ETF_return) + WEAT$`W WASDE
               WEAT$`W 2013` + WEAT$`W 2014` + WEAT$`W 2015` + WEAT$`W 2016` + WEAT$`W 2017` +
               WEAT$`W 2018` + WEAT$W2019 + WEAT$W2020)
 summary(model)
+
+#---------------------GARCH----------------------------------------------#
+err_garch = tseries::garch(x = WEAT$etf_asset_error, order = c(1,1))
+
+summary(err_garch)

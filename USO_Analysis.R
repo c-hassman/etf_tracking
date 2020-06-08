@@ -59,3 +59,8 @@ model <- lm(abs(USO$etf_asset_error) ~ abs(USO$per_ETF_return) + USO$`CL Day Bef
               USO$`CL 2017` + USO$`CL 2018` + USO$`CL 2019` + USO$`CL 2020` + USO$`CL STEO` +
               USO$`CL Drilling Prod` + USO$`CL Petro Supply/Prod` + USO$`CL Annual Energy Outlook`)
 summary(model)              
+
+#---------------------GARCH----------------------------------------------#
+err_garch = tseries::garch(x = USO$etf_asset_error, order = c(1,1))
+
+summary(err_garch)

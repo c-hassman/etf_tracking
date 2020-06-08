@@ -57,6 +57,10 @@ model <- lm(abs(UGA$etf_asset_error) ~ abs(UGA$per_ETF_return) + UGA$`RB Day Bef
               UGA$`RB 2014` + UGA$`RB 2015` + UGA$`RB 2016` + UGA$`RB 2017` + UGA$`RB 2018` + UGA$`RB 2019` +
               UGA$`RB 2020` + UGA$`RB STEO` + UGA$`RB Drilling Prod` + UGA$`RB Petro Supply/Prod` + UGA$`RB Annual Energy Outlook`)
 summary(model)              
-              
+
+#---------------------GARCH----------------------------------------------#
+err_garch = tseries::garch(x = UGA$etf_asset_error, order = c(1,1))
+
+summary(err_garch)              
             
               

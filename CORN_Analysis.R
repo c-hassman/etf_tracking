@@ -61,3 +61,8 @@ model <- lm(abs(CORN$etf_asset_error) ~ abs(CORN$per_ETF_return) + CORN$`C WASDE
               CORN$`C 2014` + CORN$`C 2015` + CORN$`C 2016` + CORN$`C 2017` + CORN$`C 2018` + CORN$`C 2019` +
               CORN$`C 2020`)
 summary(model)
+#---------------------GARCH----------------------------------------------#
+err_garch = tseries::garch(x = CORN$etf_asset_error, order = c(1,1))
+
+summary(err_garch)
+

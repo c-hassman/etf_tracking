@@ -60,3 +60,8 @@ model <- lm(abs(SOYB$etf_asset_error) ~ abs(SOYB$per_ETF_return) + SOYB$`S WASDE
               SOYB$`C Aug` + SOYB$`C Sept` + SOYB$`C Nov` + SOYB$`C Dec` + SOYB$`C 2013` + SOYB$`C 2014` +
               SOYB$`C 2015` + SOYB$`C 2016` + SOYB$`C 2017` + SOYB$`C 2018` + SOYB$`C 2019` + SOYB$`C 2020`)
 summary(model)
+
+#---------------------GARCH----------------------------------------------#
+err_garch = tseries::garch(x = SOYB$etf_asset_error, order = c(1,1))
+
+summary(err_garch)
