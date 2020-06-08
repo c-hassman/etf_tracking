@@ -64,7 +64,10 @@ summary(model)
 #---------------------GARCH----------------------------------------------#
 err_garch = tseries::garch(x = CORN$etf_asset_error, order = c(1,1))
 summary(err_garch)
-
+x = err_garch$fitted.values
+x = data.frame(x)
+x$date = CORN$DATE
+qplot(x$date, sqrt(x$sigt), geom = 'line')
 #_--------------------ACF and PACF Plots----------------------------------#
 CORN_Error <- CORN$etf_asset_error
 acf(CORN_Error)
