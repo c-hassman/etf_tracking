@@ -64,6 +64,26 @@ summary(model)
 err_garch = tseries::garch(x = USO$etf_asset_error, order = c(1,1))
 summary(err_garch)
 
+#--GARCH Volatility Graph
+# This graphs the Volatility from the GARCH model versus the market returns
+vol = err_garch$fitted.values # assign the fitted values to a variable
+vol = data.frame(vol) # convert to a dataframe
+vol$Volatility = vol$sigt # Create a new column of sigt squared
+vol$Date = USO$DATE # Assign the date column from corn to vol
+vol$'Asset Return^2' = USO$per_asset_return ^2 # add the per asset returns
+# Convert the data to a long format
+vol_long <- vol %>%
+  select(Date, Volatility, 'Asset Return^2') %>%
+  gather(key = 'variable', value = 'value', -Date)
+
+# Make Graph
+ggplot(vol_long, aes(x = Date, y = value)) + 
+  geom_line(aes(color = variable)) + 
+  scale_color_manual(values = c("darkred", "steelblue")) +
+  facet_grid(rows = vars(variable), scales = "free") +
+  theme_bw() + theme(legend.position = "none") +
+  ylab("Percent (%)") + ggtitle("USO Futures Return and Error Volatility Plot")
+
 #_--------------------ACF and PACF Plots----------------------------------#
 USO_Error <- USO$etf_asset_error
 acf(USO_Error)
