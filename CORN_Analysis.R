@@ -22,6 +22,7 @@ CORN <- read_excel("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Data_
 CORN <- CORN[order(CORN$DATE),] # order by date
 CORN$asset_basket <- (CORN$`F1(.35)` * 0.35) + (CORN$`F2(.3)` * 0.3) + (CORN$`F3(.35)` * 0.35) #reconstruct asset basket
 
+
 #-----------------------Calculate Returns and Errors--------------#
 CORN$per_asset_return <- log(CORN$asset_basket/lag(CORN$asset_basket)) # calculate percent asset basket return
 CORN$per_ETF_return <- log(CORN$CORN_MID/lag(CORN$CORN_MID)) #calculate percent ETF return
@@ -72,10 +73,10 @@ vol = err_garch$fitted.values # assign the fitted values to a variable
 vol = data.frame(vol) # convert to a dataframe
 vol$Volatility = vol$sigt # Create a new column of sigt squared
 vol$Date = CORN$DATE # Assign the date column from corn to vol
-vol$'Asset Return ^2' = CORN$per_asset_return^2 # add the per asset returns
+vol$Error = CORN$etf_asset_error^2 # add the per asset returns
 # Convert the data to a long format
 vol_long <- vol %>%
-  select(Date, Volatility, 'Asset Return ^2') %>%
+  select(Date, Volatility, Error) %>%
   gather(key = 'variable', value = 'value', -Date)
 
 # Make Graph
@@ -84,7 +85,7 @@ ggplot(vol_long, aes(x = Date, y = value)) +
   scale_color_manual(values = c("darkred", "steelblue")) +
   facet_grid(rows = vars(variable), scales = "free") +
   theme_bw() + theme(legend.position = "none") +
-  ylab("Percent (%)") + ggtitle("CORN Asset Basket Return and Error Volatility Plot")
+  ylab("Percent (%)") + ggtitle("CORN Spread^2 and Volatility Plot")
 
 #_--------------------ACF and PACF Plots----------------------------------#
 CORN_Error <- CORN$etf_asset_error
