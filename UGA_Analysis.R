@@ -4,7 +4,7 @@ library(tidyverse)
 
 #-----------------Import Data from Excel and order------------#
 UGA <- read_excel("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Data_Update.xlsx", 
-                  sheet = "UGA", col_types = c("date", 
+                  sheet = "UGA", col_types = c("numeric", 
                                                "numeric", "numeric", "numeric", 
                                                "numeric", "numeric", "numeric", 
                                                "numeric", "numeric", "numeric", 
@@ -16,6 +16,8 @@ UGA <- read_excel("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Data_U
                                                "numeric", "numeric", "numeric", 
                                                "numeric", "numeric", "numeric", 
                                                "numeric"))
+
+UGA$DATE <- as.Date(UGA$DATE, origin = "1899-12-30") 
 UGA <- UGA[order(UGA$DATE),]
 
 #-----------------------Calculate Returns and Errors--------------#
@@ -23,6 +25,25 @@ UGA$per_asset_return <- log(UGA$Futures/lag(UGA$Futures))
 UGA$per_ETF_return <- log(UGA$UGA_MID/lag(UGA$UGA_MID))
 UGA$per_NAV_return <- log(UGA$UGA_NAV/lag(UGA$UGA_NAV))
 UGA$etf_asset_error <- UGA$per_ETF_return - UGA$per_asset_return
+
+#-----------------------Add ETF Volume Data-----------------------#
+
+UGA_df <- UGA  #reassign the data so it is not deleted
+start_date <- "2012-01-04"
+end_date <- '2020-01-30'
+symbols <- "UGA"
+
+#Pull Data from Yahoo Finance
+quantmod::getSymbols(Symbols = symbols, 
+                     src = "yahoo", 
+                     index.class = "POSIXct",
+                     from = start_date, 
+                     to = end_date, 
+                     adjust = FALSE)
+UGA <- data.frame(DATE = as.Date(index(UGA)), UGA$UGA.Volume)
+UGA <- merge(UGA_df, UGA, by = "DATE")
+
+rm(UGA_df)
 UGA <- na.omit(UGA)
 
 #----------------------Exploratory Plot--------------------------#

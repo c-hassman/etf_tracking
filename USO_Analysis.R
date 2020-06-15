@@ -6,7 +6,7 @@ library(ggthemes)
 
 #------------------------Load in Data from Excel------------------------------#
 USO <- read_excel("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Data_Update.xlsx", 
-                   sheet = "USO", col_types = c("date", 
+                   sheet = "USO", col_types = c("numeric", 
                                                 "numeric", "numeric", "numeric", 
                                                 "numeric", "numeric", "numeric", 
                                                 "numeric", "numeric", "numeric", 
@@ -17,6 +17,7 @@ USO <- read_excel("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Data_U
                                                 "numeric", "numeric", "numeric", 
                                                 "numeric", "numeric", "numeric", 
                                                 "numeric", "numeric", "numeric"))
+USO$DATE <- as.Date(USO$DATE, origin = "1899-12-30") 
 USO <- USO[order(USO$DATE),]
 
 #--------------------Calculate Returns and Errors ---------------------------#
@@ -24,6 +25,25 @@ USO$per_asset_return <- log(USO$Futures/lag(USO$Futures))
 USO$per_ETF_return <- log(USO$USO_MID /lag(USO$USO_MID))
 USO$per_NAV_return <- log(USO$USO_NAV/lag(USO$USO_NAV))
 USO$etf_asset_error <- USO$per_ETF_return - USO$per_asset_return
+
+#-----------------------Add ETF Volume Data-----------------------#
+
+USO_df <- USO  #reassign the data so it is not deleted
+start_date <- "2012-01-04"
+end_date <- '2020-01-30'
+symbols <- "USO"
+
+#Pull Data from Yahoo Finance
+quantmod::getSymbols(Symbols = symbols, 
+                     src = "yahoo", 
+                     index.class = "POSIXct",
+                     from = start_date, 
+                     to = end_date, 
+                     adjust = FALSE)
+USO <- data.frame(DATE = as.Date(index(USO)), USO$USO.Volume)
+USO <- merge(USO_df, USO, by = "DATE")
+
+rm(USO_df)
 USO <- na.omit(USO)
 
 #---------------------Exploratory Plots--------------------------------------#

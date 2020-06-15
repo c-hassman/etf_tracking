@@ -5,7 +5,7 @@ library(tidyverse)
 library(ggthemes)
 
 SOYB <- read_excel("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Data_Update.xlsx", 
-                   sheet = "SOYB", col_types = c("date", 
+                   sheet = "SOYB", col_types = c("numeric", 
                                                  "numeric", "numeric", "numeric", 
                                                  "numeric", "numeric", "numeric", 
                                                  "numeric", "numeric", "numeric", 
@@ -18,6 +18,8 @@ SOYB <- read_excel("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Data_
                                                  "numeric", "numeric", "numeric", 
                                                  "numeric", "numeric", "numeric", 
                                                  "numeric", "numeric", "numeric"))
+SOYB$DATE <- as.Date(SOYB$DATE, origin = "1899-12-30") 
+
 SOYB <- SOYB[order(SOYB$DATE),]
 SOYB$asset_basket <- (SOYB$`F1(.35)` * 0.35) + (SOYB$`F2(.3)` * 0.30) + (SOYB$`F3(.35)` * 0.35)
 
@@ -26,6 +28,26 @@ SOYB$per_asset_return <- log(SOYB$asset_basket / lag(SOYB$asset_basket))
 SOYB$per_ETF_return <- log(SOYB$SOYB_MID / lag(SOYB$SOYB_MID))
 SOYB$per_NAV_return <- log(SOYB$SOYB_NAV / lag(SOYB$SOYB_NAV))
 SOYB$etf_asset_error <- SOYB$per_ETF_return - SOYB$per_asset_return
+
+#-----------------------Add ETF Volume Data-----------------------#
+
+SOYB_df <- SOYB  #reassign the data so it is not deleted
+start_date <- "2012-01-04"
+end_date <- '2020-01-30'
+symbols <- "SOYB"
+
+#Pull Data from Yahoo Finance
+quantmod::getSymbols(Symbols = symbols, 
+                     src = "yahoo", 
+                     index.class = "POSIXct",
+                     from = start_date, 
+                     to = end_date, 
+                     adjust = FALSE)
+SOYB <- data.frame(DATE = as.Date(index(SOYB)), SOYB$SOYB.Volume)
+SOYB <- merge(SOYB_df, SOYB, by = "DATE")
+
+rm(SOYB_df)
+
 SOYB <- na.omit(SOYB)
 
 #---------------------Exploratory Plots--------------------------------------#

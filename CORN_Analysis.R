@@ -2,11 +2,12 @@ rm(list = ls())
 library(readxl)
 library(tidyverse)
 library(ggthemes)
+library(xts)
 
 
 #-----------------Import Data from Excel and order------------#
 CORN <- read_excel("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Data_Update.xlsx", 
-                   sheet = "CORN", col_types = c("date", 
+                   sheet = "CORN", col_types = c("numeric", 
                                                  "numeric", "numeric", "numeric", 
                                                  "numeric", "numeric", "numeric", 
                                                  "numeric", "numeric", "numeric", 
@@ -19,6 +20,11 @@ CORN <- read_excel("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Data_
                                                  "numeric", "numeric", "numeric", 
                                                  "numeric", "numeric", "numeric", 
                                                  "numeric", "numeric", "numeric"))
+
+CORN$DATE <- as.Date(CORN$DATE, origin = "1899-12-30") 
+# Note: If I import the Date column as a "Date" using readxl, it includes a timezone character
+# which creates issue when I merge this df and the volume df. also need to store the data in 
+# excel as a 
 CORN <- CORN[order(CORN$DATE),] # order by date
 CORN$asset_basket <- (CORN$`F1(.35)` * 0.35) + (CORN$`F2(.3)` * 0.3) + (CORN$`F3(.35)` * 0.35) #reconstruct asset basket
 
@@ -28,6 +34,31 @@ CORN$per_asset_return <- log(CORN$asset_basket/lag(CORN$asset_basket)) # calcula
 CORN$per_ETF_return <- log(CORN$CORN_MID/lag(CORN$CORN_MID)) #calculate percent ETF return
 CORN$per_NAV_return <- log(CORN$CORN_NAV/lag(CORN$CORN_NAV)) #calculate percent NAV return
 CORN$etf_asset_error <- CORN$per_ETF_return - CORN$per_asset_return #calculate error between ETF and Asset
+
+#-----------------------Add ETF Volume Data-----------------------#
+
+CORN_df <- CORN  #reassign the data so it is not deleted
+start_date <- "2012-01-04"
+end_date <- '2020-01-30'
+symbols <- "CORN"
+
+#Pull Data from Yahoo Finance
+quantmod::getSymbols(Symbols = symbols, 
+           src = "yahoo", 
+           index.class = "POSIXct",
+           from = start_date, 
+           to = end_date, 
+           adjust = FALSE)
+CORN <- data.frame(DATE = as.Date(index(CORN)), CORN$CORN.Volume)
+CORN <- merge(CORN_df, CORN, by = "DATE")
+
+rm(CORN_df)
+
+#this is such sloppy code. in final version I will really clean it up
+# use tmp files if needed
+
+
+
 CORN <- na.omit(CORN) #Omit the rows with NAs, which are the final roll days
 
 #-----------------------Exploratory Plots-----------------------#
