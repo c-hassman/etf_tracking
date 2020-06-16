@@ -28,23 +28,15 @@ WEAT$per_NAV_return <- log(WEAT$WEAT_NAV/lag(WEAT$WEAT_NAV)) #calculate percent 
 WEAT$etf_asset_error <- WEAT$per_ETF_return - WEAT$per_asset_return #calculate percent ETF return
 
 #-----------------------Add ETF Volume Data-----------------------#
-
-WEAT_df <- WEAT  #reassign the data so it is not deleted
-start_date <- "2012-01-04"
-end_date <- '2020-01-30'
-symbols <- "WEAT"
-
-#Pull Data from Yahoo Finance
-quantmod::getSymbols(Symbols = symbols, 
-                     src = "yahoo", 
-                     index.class = "POSIXct",
-                     from = start_date, 
-                     to = end_date, 
-                     adjust = FALSE)
-WEAT <- data.frame(DATE = as.Date(index(WEAT)), WEAT$WEAT.Volume)
-WEAT <- merge(WEAT_df, WEAT, by = "DATE")
-
-rm(WEAT_df)
+# Import volume data from csv
+volume <- read.csv("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Volume.csv")
+# subset the dataframe to only the relevant columes
+volume <- data.frame(as.Date(volume$DATE), volume$WEAT.Volume)
+#rename the columns
+colnames(volume) <- c("DATE", "Volume")
+#Merge the Volume data with the other data
+WEAT <- merge(WEAT, volume, by = "DATE")
+#Remove rows with NA
 WEAT <- na.omit(WEAT) #Omit Rows with NAs
 
 #---------------------Exploratory Plots--------------------------#

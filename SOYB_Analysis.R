@@ -30,24 +30,15 @@ SOYB$per_NAV_return <- log(SOYB$SOYB_NAV / lag(SOYB$SOYB_NAV))
 SOYB$etf_asset_error <- SOYB$per_ETF_return - SOYB$per_asset_return
 
 #-----------------------Add ETF Volume Data-----------------------#
-
-SOYB_df <- SOYB  #reassign the data so it is not deleted
-start_date <- "2012-01-04"
-end_date <- '2020-01-30'
-symbols <- "SOYB"
-
-#Pull Data from Yahoo Finance
-quantmod::getSymbols(Symbols = symbols, 
-                     src = "yahoo", 
-                     index.class = "POSIXct",
-                     from = start_date, 
-                     to = end_date, 
-                     adjust = FALSE)
-SOYB <- data.frame(DATE = as.Date(index(SOYB)), SOYB$SOYB.Volume)
-SOYB <- merge(SOYB_df, SOYB, by = "DATE")
-
-rm(SOYB_df)
-
+# Import volume data from csv
+volume <- read.csv("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Volume.csv")
+# subset the dataframe to only the relevant columes
+volume <- data.frame(as.Date(volume$DATE), volume$SOYB.Volume)
+#rename the columns
+colnames(volume) <- c("DATE", "Volume")
+#Merge the Volume data with the other data
+SOYB <- merge(SOYB, volume, by = "DATE")
+#Remove rows with NA
 SOYB <- na.omit(SOYB)
 
 #---------------------Exploratory Plots--------------------------------------#

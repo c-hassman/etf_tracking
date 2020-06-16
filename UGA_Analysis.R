@@ -28,22 +28,15 @@ UGA$etf_asset_error <- UGA$per_ETF_return - UGA$per_asset_return
 
 #-----------------------Add ETF Volume Data-----------------------#
 
-UGA_df <- UGA  #reassign the data so it is not deleted
-start_date <- "2012-01-04"
-end_date <- '2020-01-30'
-symbols <- "UGA"
-
-#Pull Data from Yahoo Finance
-quantmod::getSymbols(Symbols = symbols, 
-                     src = "yahoo", 
-                     index.class = "POSIXct",
-                     from = start_date, 
-                     to = end_date, 
-                     adjust = FALSE)
-UGA <- data.frame(DATE = as.Date(index(UGA)), UGA$UGA.Volume)
-UGA <- merge(UGA_df, UGA, by = "DATE")
-
-rm(UGA_df)
+# Import volume data from csv
+volume <- read.csv("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Volume.csv")
+# subset the dataframe to only the relevant columes
+volume <- data.frame(as.Date(volume$DATE), volume$UGA.Volume)
+#rename the columns
+colnames(volume) <- c("DATE", "Volume")
+#Merge the Volume data with the other data
+UGA <- merge(UGA, volume, by = "DATE")
+#Remove rows with NA
 UGA <- na.omit(UGA)
 
 #----------------------Exploratory Plot--------------------------#

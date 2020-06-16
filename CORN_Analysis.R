@@ -36,30 +36,22 @@ CORN$per_NAV_return <- log(CORN$CORN_NAV/lag(CORN$CORN_NAV)) #calculate percent 
 CORN$etf_asset_error <- CORN$per_ETF_return - CORN$per_asset_return #calculate error between ETF and Asset
 
 #-----------------------Add ETF Volume Data-----------------------#
-
-CORN_df <- CORN  #reassign the data so it is not deleted
-start_date <- "2012-01-04"
-end_date <- '2020-01-30'
-symbols <- "CORN"
-
-#Pull Data from Yahoo Finance
-quantmod::getSymbols(Symbols = symbols, 
-           src = "yahoo", 
-           index.class = "POSIXct",
-           from = start_date, 
-           to = end_date, 
-           adjust = FALSE)
-CORN <- data.frame(DATE = as.Date(index(CORN)), CORN$CORN.Volume)
-CORN <- merge(CORN_df, CORN, by = "DATE")
-
-rm(CORN_df)
-
-#this is such sloppy code. in final version I will really clean it up
-# use tmp files if needed
-
-
-
+# Import volume data from csv
+volume <- read.csv("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Volume.csv")
+# subset the dataframe to only the relevant columes
+volume <- data.frame(as.Date(volume$DATE), as.volume$CORN.Volume)
+#rename the columns
+colnames(volume) <- c("DATE", "Volume")
+#Merge the Volume data with the other data
+CORN <- merge(CORN, volume, by = "DATE")
+#Remove rows with NA
 CORN <- na.omit(CORN) #Omit the rows with NAs, which are the final roll days
+
+# Quick Test to see if there is evidence of Volume might explain some error
+volume_mod <- lm(abs(CORN$etf_asset_error) ~  abs(CORN$per_asset_return) + CORN$Volume)
+summary(volume_mod)
+
+
 
 #-----------------------Exploratory Plots-----------------------#
 #------ETF, Asset Basket Error

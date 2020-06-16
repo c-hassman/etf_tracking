@@ -28,22 +28,15 @@ USO$etf_asset_error <- USO$per_ETF_return - USO$per_asset_return
 
 #-----------------------Add ETF Volume Data-----------------------#
 
-USO_df <- USO  #reassign the data so it is not deleted
-start_date <- "2012-01-04"
-end_date <- '2020-01-30'
-symbols <- "USO"
-
-#Pull Data from Yahoo Finance
-quantmod::getSymbols(Symbols = symbols, 
-                     src = "yahoo", 
-                     index.class = "POSIXct",
-                     from = start_date, 
-                     to = end_date, 
-                     adjust = FALSE)
-USO <- data.frame(DATE = as.Date(index(USO)), USO$USO.Volume)
-USO <- merge(USO_df, USO, by = "DATE")
-
-rm(USO_df)
+# Import volume data from csv
+volume <- read.csv("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Volume.csv")
+# subset the dataframe to only the relevant columes
+volume <- data.frame(as.Date(volume$DATE), volume$USO.Volume)
+#rename the columns
+colnames(volume) <- c("DATE", "Volume")
+#Merge the Volume data with the other data
+USO <- merge(USO, volume, by = "DATE")
+#Remove rows with NA
 USO <- na.omit(USO)
 
 #---------------------Exploratory Plots--------------------------------------#
