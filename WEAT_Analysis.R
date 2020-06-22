@@ -39,40 +39,6 @@ WEAT <- merge(WEAT, volume, by = "DATE")
 #Remove rows with NA
 WEAT <- na.omit(WEAT) #Omit Rows with NAs
 
-#---------------------Exploratory Plots--------------------------#
-#------ETF, Asset Basket Error
-qplot(WEAT$DATE, (WEAT$etf_asset_error * 100), geom = 'line') + theme_bw() +
-  ggtitle("Daily Return Error: WEAT ETF - Asset Basket") + ylab("Error (%)") +
-  xlab("Date")
-#-----ETF and Asset Basket 
-etfcolor <- "black"
-assetcolor <- "darkgrey"
-coeff <- WEAT$asset_basket[1] / WEAT$WEAT_MID[1]
-ggplot(data = WEAT, aes(x = DATE)) +
-  geom_line(aes(y = WEAT_MID), color = etfcolor) +
-  geom_line(aes(y = asset_basket / coeff), color = assetcolor) +
-  scale_y_continuous(
-    name = 'ETF Price ($)', 
-    sec.axis = sec_axis(~.*coeff, name = "Asset Basket Price (cents per bushel)")
-  ) + theme_bw() + ggtitle('WEAT ETF and Asset Basket Price')
-#----Premium/Discount to NAV
-qplot(WEAT$DATE, ((WEAT$WEAT_MID - WEAT$WEAT_NAV)/WEAT$WEAT_NAV * 100), geom = 'line') +
-  theme_bw() + ylab("Premium/Discount (%)") + xlab("Date") + ggtitle("WEAT Premium/Discount to NAV")
-
-#-------------------OLS-----------------------------------------------#
-#--------Simple
-simple <- lm(per_asset_return ~ per_ETF_return, data = WEAT)
-summary(simple)
-
-#--------Dummy
-model <- lm(abs(WEAT$etf_asset_error) ~ abs(WEAT$per_ETF_return) + WEAT$`W WASDE` + WEAT$`W WASDE + CP` +
-              WEAT$`W Grain Stocks` + WEAT$`W Prospective Plantings` + WEAT$`W Acreage Report` +
-              WEAT$`W Cattle on Feed` + WEAT$`W Hogs & Pigs` + WEAT$`W Day Before Roll` + WEAT$`W Day After Roll` +
-              WEAT$`W Feb` + WEAT$`W Mar` + WEAT$`W April` + WEAT$`W May` + WEAT$`W June` + 
-              WEAT$`W July` + WEAT$`W Aug` + WEAT$`W Sept` + WEAT$`W Oct` + WEAT$`W Nov` + WEAT$`W Dec` +
-              WEAT$`W 2013` + WEAT$`W 2014` + WEAT$`W 2015` + WEAT$`W 2016` + WEAT$`W 2017` +
-              WEAT$`W 2018` + WEAT$W2019 + WEAT$W2020)
-summary(model)
 
 #---------------------GARCH----------------------------------------------#
 err_garch = tseries::garch(x = WEAT$etf_asset_error, order = c(1,1))

@@ -1,0 +1,194 @@
+============================
+This text document is made to store the unused code from ETF Tracking Error Analysis
+
+============================
+CORN
+============================
+#-----------------------Exploratory Plots-----------------------#
+#------ETF, Asset Basket Error
+qplot(CORN$DATE, (CORN$etf_asset_error * 100), geom = 'line') + theme_bw() +
+  ggtitle('Daily Return Error: CORN ETF - Asset Basket') +
+  ylab('Error (%)') + xlab("Date")
+#-----ETF and Asset Basket 
+etfcolor <- "black"
+assetcolor <- "darkgrey"
+coeff <- CORN$asset_basket[1] / CORN$CORN_MID[1]
+ggplot(data = CORN, aes(x = DATE)) +
+  geom_line(aes(y = CORN_MID), color = etfcolor) +
+  geom_line(aes(y = asset_basket / coeff), color = assetcolor) +
+  scale_y_continuous(
+    name = "ETF Price ($)", 
+    sec.axis = sec_axis(~.*coeff, name = "Asset Basket Price (cents per bushel")
+  ) + theme_bw() + ggtitle("CORN ETF and Asset Basket Price") + xlab("Date") 
+#----Premium/Discount to NAV
+qplot(CORN$DATE, ((CORN$CORN_MID - CORN$CORN_NAV)/CORN$CORN_NAV * 100), geom = 'line') +
+  theme_bw() + ylab("Premium/Discount (%)") + xlab("Date") + ggtitle("CORN Premium/Discount to NAV")
+#-------------------OLS-----------------------------------------------#
+#--------Simple
+simple <- lm(per_asset_return ~ per_ETF_return, data = CORN)
+summary(simple)
+
+#--------Dummy
+model <- lm(abs(CORN$etf_asset_error) ~ abs(CORN$per_ETF_return) + CORN$`C WASDE` + CORN$`C WASDE + CP` +
+              CORN$`C Grain Stocks` + CORN$`C Prospective Plantings` + CORN$`C Acreage Report` + 
+              CORN$`C Cattle on Feed` + CORN$`C Hogs & Pigs` + CORN$`C Day Before Roll` + CORN$`C Day After Roll`+
+              CORN$`C Feb` + CORN$`C Mar` + CORN$`C April` + CORN$`C May` + CORN$`C June` + CORN$`C July` +
+              CORN$`C Aug` + CORN$`C Sept` + CORN$`C Oct` + CORN$`C Nov` + CORN$`C Dec` + CORN$`C 2013` +
+              CORN$`C 2014` + CORN$`C 2015` + CORN$`C 2016` + CORN$`C 2017` + CORN$`C 2018` + CORN$`C 2019` +
+              CORN$`C 2020`)
+summary(model)
+
+
+
+=================================
+SOYB
+=================================
+
+#---------------------Exploratory Plots--------------------------------------#
+#------ETF, Asset Basket Error
+qplot(SOYB$DATE, (SOYB$etf_asset_error * 100), geom = 'line') + theme_bw() +
+  ggtitle("Daily Return Error: SOYB ETF - Asset Basket") + ylab("Error (%)") +
+  xlab("Date")
+#-----ETF and Asset Basket 
+etfcolor <- "black"
+assetcolor <- "darkgrey"
+coeff <- SOYB$asset_basket[1]/SOYB$SOYB_MID[1]
+ggplot(data = SOYB, aes(x = DATE)) +
+  geom_line(aes(y = SOYB_MID), color = etfcolor) +
+  geom_line(aes(y = asset_basket / coeff), color = assetcolor) +
+  scale_y_continuous(
+    name = 'ETF Price ($)',
+    sec.axis = sec_axis(~.*coeff, name = "Asset Basket Price (cents per bushel)")
+  ) + theme_bw() + ggtitle("SOYB ETF and Asset Basket Price") + xlab("Date") 
+#----Premium/Discount to NAV
+qplot(SOYB$DATE, ((SOYB$SOYB_MID - SOYB$SOYB_NAV)/SOYB$SOYB_NAV * 100), geom = 'line') +
+  theme_bw() + ylab("Premium/Discount (%)") + xlab("Date") + ggtitle("SOYB Premium/Discount to NAV")
+
+#-------------------OLS-----------------------------------------------#
+#--------Simple
+simple <- lm(per_asset_return ~ per_ETF_return, data = SOYB)
+summary(simple)
+
+#--------Dummy
+model <- lm(abs(SOYB$etf_asset_error) ~ abs(SOYB$per_ETF_return) + SOYB$`S WASDE` + SOYB$`S WASDE + CP` +
+              SOYB$`S Grain Stocks` + SOYB$`S Prospective Plantings` + SOYB$`S Acreage Report` + 
+              SOYB$`S Cattle on Feed` + SOYB$`S Hogs & Pigs` + SOYB$`S Day Before Roll` + SOYB$`S Day After Roll` +
+              SOYB$`C Feb` + SOYB$`C Mar` + SOYB$`C April` + SOYB$`C May` + SOYB$`C June` + SOYB$`C July` +
+              SOYB$`C Aug` + SOYB$`C Sept` + SOYB$`C Nov` + SOYB$`C Dec` + SOYB$`C 2013` + SOYB$`C 2014` +
+              SOYB$`C 2015` + SOYB$`C 2016` + SOYB$`C 2017` + SOYB$`C 2018` + SOYB$`C 2019` + SOYB$`C 2020`)
+summary(model)
+
+
+===========================
+WEAT
+===========================
+
+#---------------------Exploratory Plots--------------------------#
+#------ETF, Asset Basket Error
+qplot(WEAT$DATE, (WEAT$etf_asset_error * 100), geom = 'line') + theme_bw() +
+  ggtitle("Daily Return Error: WEAT ETF - Asset Basket") + ylab("Error (%)") +
+  xlab("Date")
+#-----ETF and Asset Basket 
+etfcolor <- "black"
+assetcolor <- "darkgrey"
+coeff <- WEAT$asset_basket[1] / WEAT$WEAT_MID[1]
+ggplot(data = WEAT, aes(x = DATE)) +
+  geom_line(aes(y = WEAT_MID), color = etfcolor) +
+  geom_line(aes(y = asset_basket / coeff), color = assetcolor) +
+  scale_y_continuous(
+    name = 'ETF Price ($)', 
+    sec.axis = sec_axis(~.*coeff, name = "Asset Basket Price (cents per bushel)")
+  ) + theme_bw() + ggtitle('WEAT ETF and Asset Basket Price')
+#----Premium/Discount to NAV
+qplot(WEAT$DATE, ((WEAT$WEAT_MID - WEAT$WEAT_NAV)/WEAT$WEAT_NAV * 100), geom = 'line') +
+  theme_bw() + ylab("Premium/Discount (%)") + xlab("Date") + ggtitle("WEAT Premium/Discount to NAV")
+
+#-------------------OLS-----------------------------------------------#
+#--------Simple
+simple <- lm(per_asset_return ~ per_ETF_return, data = WEAT)
+summary(simple)
+
+#--------Dummy
+model <- lm(abs(WEAT$etf_asset_error) ~ abs(WEAT$per_ETF_return) + WEAT$`W WASDE` + WEAT$`W WASDE + CP` +
+              WEAT$`W Grain Stocks` + WEAT$`W Prospective Plantings` + WEAT$`W Acreage Report` +
+              WEAT$`W Cattle on Feed` + WEAT$`W Hogs & Pigs` + WEAT$`W Day Before Roll` + WEAT$`W Day After Roll` +
+              WEAT$`W Feb` + WEAT$`W Mar` + WEAT$`W April` + WEAT$`W May` + WEAT$`W June` + 
+              WEAT$`W July` + WEAT$`W Aug` + WEAT$`W Sept` + WEAT$`W Oct` + WEAT$`W Nov` + WEAT$`W Dec` +
+              WEAT$`W 2013` + WEAT$`W 2014` + WEAT$`W 2015` + WEAT$`W 2016` + WEAT$`W 2017` +
+              WEAT$`W 2018` + WEAT$W2019 + WEAT$W2020)
+summary(model)
+
+
+=====================================
+UGA
+=============================
+
+#----------------------Exploratory Plot--------------------------#
+#------ETF, Asset Basket Error
+qplot(UGA$DATE, (UGA$etf_asset_error * 100), geom = 'line') + theme_bw() +
+  ggtitle("Daily Return Error: UGA ETF - Asset Basket") + ylab("Error (%)") +
+  xlab("Date")
+#-----ETF and Asset Basket 
+etfcolor <- "black"
+assetcolor <- "darkgrey"
+coeff <- UGA$Futures[1] / UGA$UGA_MID[1]
+ggplot(data = UGA, aes(x = DATE)) +
+  geom_line(aes(y = UGA_MID), color = etfcolor) +
+  geom_line(aes(y = Futures / coeff), color = assetcolor) +
+  scale_y_continuous(
+    name = 'ETF Price ($)',
+    sec.axis = sec_axis(~.*coeff, name = "Asset Basket Price (Dollars per Gallon)")
+) + theme_bw() + ggtitle("UGA ETF and Asset Basket Price") + xlab("Date") 
+#----Premium/Discount to NAV
+qplot(UGA$DATE, ((UGA$UGA_MID - UGA$UGA_NAV)/UGA$UGA_NAV * 100), geom = 'line') +
+  theme_bw() + ylab("Premium/Discount (%)") + xlab("Date") + ggtitle("UGA Premium/Discount to NAV")
+
+#-------------------OLS-----------------------------------------------#
+#--------Simple
+simple <- lm(per_asset_return ~ per_ETF_return, data = UGA)
+summary(simple)
+
+#--------Dummy
+model <- lm(abs(UGA$etf_asset_error) ~ abs(UGA$per_ETF_return) + UGA$`RB Day Before Roll` + UGA$`RB Day After Roll` +
+              UGA$`RB Feb` + UGA$`RB Mar` + UGA$`RB April` + UGA$`RB May` + UGA$`RB June` + UGA$`RB July` +
+              UGA$`RB Aug` + UGA$`RB Sept` + UGA$`RB Oct` + UGA$`RB Nov` + UGA$`RB Dec` + UGA$`RB 2013` +
+              UGA$`RB 2014` + UGA$`RB 2015` + UGA$`RB 2016` + UGA$`RB 2017` + UGA$`RB 2018` + UGA$`RB 2019` +
+              UGA$`RB 2020` + UGA$`RB STEO` + UGA$`RB Drilling Prod` + UGA$`RB Petro Supply/Prod` + UGA$`RB Annual Energy Outlook`)
+summary(model)              
+
+======================
+USO
+=====================
+#---------------------Exploratory Plots--------------------------------------#
+#------ETF, Asset Basket Error
+qplot(USO$DATE, (USO$etf_asset_error * 100), geom = 'line') + theme_bw() +
+  ggtitle("Daily Return Error: USO ETF - Asset Basket") + ylab("Error (%)") +
+  xlab("Date")
+#-----ETF and Asset Basket
+etfcolor <- "black"
+assetcolor <- "darkgrey"
+coeff <- USO$Futures[1]/USO$USO_MID[1]
+ggplot(data = USO, aes(x = DATE)) +
+  geom_line(aes(y = USO_MID), color = etfcolor) +
+  geom_line(aes(y = Futures / coeff), color = assetcolor) +
+  scale_y_continuous(
+    name = 'ETF Price ($)',
+    sec.axis = sec_axis(~.*coeff, name = "Asset Basket ($ per Barrel")
+  ) + theme_bw() + ggtitle("USO ETF and Asset Basket Price") + xlab("Date")
+#----Premium/Discount to NAV
+qplot(USO$DATE, ((USO$USO_MID - USO$USO_NAV)/USO$USO_NAV * 100), geom = 'line') +
+  theme_bw() + ylab("Premium/Discount (%)") + xlab("Date") + ggtitle("USO Premium/Discount to NAV")
+
+#-------------------OLS-----------------------------------------------#
+#--------Simple
+simple <- lm(per_asset_return ~ per_ETF_return, data = USO)
+summary(simple)
+
+#--------Dummy
+model <- lm(abs(USO$etf_asset_error) ~ abs(USO$per_ETF_return) + USO$`CL Day Before Roll` +
+              USO$`CL Day After Roll` + USO$`CL Feb` + USO$`CL Mar` + USO$`CL April` + USO$`CL May` +
+              USO$`CL June` + USO$`CL July` + USO$`CL Aug` + USO$`CL Sept` + USO$`CL Oct` +
+              USO$`CL Nov` + USO$`CL Dec` + USO$`CL 2014` + USO$`CL 2015` + USO$`CL 2016` +
+              USO$`CL 2017` + USO$`CL 2018` + USO$`CL 2019` + USO$`CL 2020` + USO$`CL STEO` +
+              USO$`CL Drilling Prod` + USO$`CL Petro Supply/Prod` + USO$`CL Annual Energy Outlook`)
+summary(model)              

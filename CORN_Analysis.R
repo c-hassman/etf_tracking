@@ -51,41 +51,6 @@ CORN <- na.omit(CORN) #Omit the rows with NAs, which are the final roll days
 volume_mod <- lm(abs(CORN$etf_asset_error) ~  abs(CORN$per_asset_return) + CORN$Volume)
 summary(volume_mod)
 
-
-
-#-----------------------Exploratory Plots-----------------------#
-#------ETF, Asset Basket Error
-qplot(CORN$DATE, (CORN$etf_asset_error * 100), geom = 'line') + theme_bw() +
-  ggtitle('Daily Return Error: CORN ETF - Asset Basket') +
-  ylab('Error (%)') + xlab("Date")
-#-----ETF and Asset Basket 
-etfcolor <- "black"
-assetcolor <- "darkgrey"
-coeff <- CORN$asset_basket[1] / CORN$CORN_MID[1]
-ggplot(data = CORN, aes(x = DATE)) +
-  geom_line(aes(y = CORN_MID), color = etfcolor) +
-  geom_line(aes(y = asset_basket / coeff), color = assetcolor) +
-  scale_y_continuous(
-    name = "ETF Price ($)", 
-    sec.axis = sec_axis(~.*coeff, name = "Asset Basket Price (cents per bushel")
-  ) + theme_bw() + ggtitle("CORN ETF and Asset Basket Price") + xlab("Date") 
-#----Premium/Discount to NAV
-qplot(CORN$DATE, ((CORN$CORN_MID - CORN$CORN_NAV)/CORN$CORN_NAV * 100), geom = 'line') +
-  theme_bw() + ylab("Premium/Discount (%)") + xlab("Date") + ggtitle("CORN Premium/Discount to NAV")
-#-------------------OLS-----------------------------------------------#
-#--------Simple
-simple <- lm(per_asset_return ~ per_ETF_return, data = CORN)
-summary(simple)
-
-#--------Dummy
-model <- lm(abs(CORN$etf_asset_error) ~ abs(CORN$per_ETF_return) + CORN$`C WASDE` + CORN$`C WASDE + CP` +
-              CORN$`C Grain Stocks` + CORN$`C Prospective Plantings` + CORN$`C Acreage Report` + 
-              CORN$`C Cattle on Feed` + CORN$`C Hogs & Pigs` + CORN$`C Day Before Roll` + CORN$`C Day After Roll`+
-              CORN$`C Feb` + CORN$`C Mar` + CORN$`C April` + CORN$`C May` + CORN$`C June` + CORN$`C July` +
-              CORN$`C Aug` + CORN$`C Sept` + CORN$`C Oct` + CORN$`C Nov` + CORN$`C Dec` + CORN$`C 2013` +
-              CORN$`C 2014` + CORN$`C 2015` + CORN$`C 2016` + CORN$`C 2017` + CORN$`C 2018` + CORN$`C 2019` +
-              CORN$`C 2020`)
-summary(model)
 #---------------------GARCH----------------------------------------------#
 err_garch = tseries::garch(x = CORN$etf_asset_error, order = c(1,1))
 summary(err_garch)
