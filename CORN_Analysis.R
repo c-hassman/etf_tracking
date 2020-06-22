@@ -39,7 +39,7 @@ CORN$etf_asset_error <- CORN$per_ETF_return - CORN$per_asset_return #calculate e
 # Import volume data from csv
 volume <- read.csv("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Volume.csv")
 # subset the dataframe to only the relevant columes
-volume <- data.frame(as.Date(volume$DATE), as.volume$CORN.Volume)
+volume <- data.frame(as.Date(volume$DATE), volume$CORN.Volume)
 #rename the columns
 colnames(volume) <- c("DATE", "Volume")
 #Merge the Volume data with the other data
