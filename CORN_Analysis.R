@@ -3,6 +3,8 @@ library(readxl)
 library(tidyverse)
 library(ggthemes)
 library(xts)
+library(tidyr)
+library(zoo)
 
 
 #-----------------Import Data from Excel and order------------#
@@ -21,18 +23,22 @@ CORN <- read_excel("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Data_
                                                  "numeric", "numeric", "numeric", 
                                                  "numeric", "numeric", "numeric"))
 
+#------------------Date Manipulation and Cleaning---------------#
+# This is a very messy section. I need to come back and clean it up, but I can somewhat attest
+# to it's effectiveness. No data loss
+
 CORN$DATE <- as.Date(CORN$DATE, origin = "1899-12-30") 
 # Note: If I import the Date column as a "Date" using readxl, it includes a timezone character
-# which creates issue when I merge this df and the volume df. also need to store the data in 
-# excel as a 
+# which creates issue when I merge this df and the volume df. 
+# The data is imported in excel date numbers, which is why I need to set the origin to the proper amount
 CORN <- CORN[order(CORN$DATE),] # order by date
-CORN$asset_basket <- (CORN$`F1(.35)` * 0.35) + (CORN$`F2(.3)` * 0.3) + (CORN$`F3(.35)` * 0.35) #reconstruct asset basket
 
 
 #-----------------------Calculate Returns and Errors--------------#
-CORN$per_asset_return <- log(CORN$asset_basket/lag(CORN$asset_basket)) # calculate percent asset basket return
-CORN$per_ETF_return <- log(CORN$CORN_MID/lag(CORN$CORN_MID)) #calculate percent ETF return
-CORN$per_NAV_return <- log(CORN$CORN_NAV/lag(CORN$CORN_NAV)) #calculate percent NAV return
+CORN$asset_basket <- (CORN$`F1(.35)` * 0.35) + (CORN$`F2(.3)` * 0.3) + (CORN$`F3(.35)` * 0.35) #reconstruct asset basket
+CORN$per_asset_return <- log(CORN$asset_basket/lag(CORN$asset_basket))* 100 # calculate percent asset basket return
+CORN$per_ETF_return <- log(CORN$CORN_MID/lag(CORN$CORN_MID)) * 100#calculate percent ETF return
+CORN$per_NAV_return <- log(CORN$CORN_NAV/lag(CORN$CORN_NAV)) * 100#calculate percent NAV return
 CORN$etf_asset_error <- CORN$per_ETF_return - CORN$per_asset_return #calculate error between ETF and Asset
 
 #-----------------------Add ETF Volume Data-----------------------#
@@ -44,12 +50,26 @@ volume <- data.frame(as.Date(volume$DATE), volume$CORN.Volume)
 colnames(volume) <- c("DATE", "Volume")
 #Merge the Volume data with the other data
 CORN <- merge(CORN, volume, by = "DATE")
-#Remove rows with NA
-CORN <- na.omit(CORN) #Omit the rows with NAs, which are the final roll days
 
-# Quick Test to see if there is evidence of Volume might explain some error
-volume_mod <- lm(abs(CORN$etf_asset_error) ~  abs(CORN$per_asset_return) + CORN$Volume)
-summary(volume_mod)
+#----------------------More Date Manipulation----------------#
+# The code below handles the issue of roll dates and using a continous time model
+# with things which dont trade on the weekend. 
+
+#Remove rows with NAsm which has the effect of deleting roll days
+CORN <- na.omit(CORN) 
+
+# This creates rows of NA's for all the missing days, including weekends, holidays,
+# and the roll days we just deleted. Not sure why I have to create another "Date"
+# column but that is the only way I could get it to work
+CORN <- CORN %>% 
+  mutate(Date = as.Date(DATE)) %>% 
+  complete(Date = seq.Date(min(DATE), max(DATE), by="day"))
+
+# Now to forward fill the date
+CORN <- na.locf(na.locf(CORN), fromLast = TRUE)
+
+# Remove the additional date column
+CORN <- subset(CORN, select = -Date)
 
 #---------------------GARCH----------------------------------------------#
 err_garch = tseries::garch(x = CORN$etf_asset_error, order = c(1,1))

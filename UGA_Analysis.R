@@ -1,7 +1,9 @@
 rm(list = ls())
 library(readxl)
 library(tidyverse)
-
+library(xts)
+library(tidyr)
+library(zoo)
 #-----------------Import Data from Excel and order------------#
 UGA <- read_excel("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Data_Update.xlsx", 
                   sheet = "UGA", col_types = c("numeric", 
@@ -17,13 +19,14 @@ UGA <- read_excel("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Data_U
                                                "numeric", "numeric", "numeric", 
                                                "numeric"))
 
+#-------------------Date Manipulation and Cleaning----------------------#
 UGA$DATE <- as.Date(UGA$DATE, origin = "1899-12-30") 
 UGA <- UGA[order(UGA$DATE),]
 
 #-----------------------Calculate Returns and Errors--------------#
-UGA$per_asset_return <- log(UGA$Futures/lag(UGA$Futures)) 
-UGA$per_ETF_return <- log(UGA$UGA_MID/lag(UGA$UGA_MID))
-UGA$per_NAV_return <- log(UGA$UGA_NAV/lag(UGA$UGA_NAV))
+UGA$per_asset_return <- log(UGA$Futures/lag(UGA$Futures)) * 100
+UGA$per_ETF_return <- log(UGA$UGA_MID/lag(UGA$UGA_MID)) * 100
+UGA$per_NAV_return <- log(UGA$UGA_NAV/lag(UGA$UGA_NAV)) * 100
 UGA$etf_asset_error <- UGA$per_ETF_return - UGA$per_asset_return
 
 #-----------------------Add ETF Volume Data-----------------------#
@@ -36,8 +39,20 @@ volume <- data.frame(as.Date(volume$DATE), volume$UGA.Volume)
 colnames(volume) <- c("DATE", "Volume")
 #Merge the Volume data with the other data
 UGA <- merge(UGA, volume, by = "DATE")
+
+#----------------------More Date Manipulation----------------#
 #Remove rows with NA
 UGA <- na.omit(UGA)
+
+UGA <- UGA %>% 
+  mutate(Date = as.Date(DATE)) %>% 
+  complete(Date = seq.Date(min(DATE), max(DATE), by="day"))
+
+# Now to forward fill the date
+UGA <- na.locf(na.locf(UGA), fromLast = TRUE)
+
+# Remove the additional date column
+UGA <- subset(UGA, select = -Date)
 
 #---------------------GARCH----------------------------------------------#
 err_garch = tseries::garch(x = UGA$etf_asset_error, order = c(1,1))

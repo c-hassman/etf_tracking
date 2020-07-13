@@ -2,7 +2,9 @@ rm(list=ls())
 library(readxl)
 library(tidyverse)
 library(ggthemes)
-
+library(xts)
+library(tidyr)
+library(zoo)
 
 #------------------------Load in Data from Excel------------------------------#
 USO <- read_excel("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Data_Update.xlsx", 
@@ -17,13 +19,14 @@ USO <- read_excel("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Data_U
                                                 "numeric", "numeric", "numeric", 
                                                 "numeric", "numeric", "numeric", 
                                                 "numeric", "numeric", "numeric"))
+#-------------------Date Manipulation and Cleaning----------------------#
 USO$DATE <- as.Date(USO$DATE, origin = "1899-12-30") 
 USO <- USO[order(USO$DATE),]
 
 #--------------------Calculate Returns and Errors ---------------------------#
-USO$per_asset_return <- log(USO$Futures/lag(USO$Futures))
-USO$per_ETF_return <- log(USO$USO_MID /lag(USO$USO_MID))
-USO$per_NAV_return <- log(USO$USO_NAV/lag(USO$USO_NAV))
+USO$per_asset_return <- log(USO$Futures/lag(USO$Futures)) * 100
+USO$per_ETF_return <- log(USO$USO_MID /lag(USO$USO_MID)) * 100
+USO$per_NAV_return <- log(USO$USO_NAV/lag(USO$USO_NAV)) * 100
 USO$etf_asset_error <- USO$per_ETF_return - USO$per_asset_return
 USO
 
@@ -37,9 +40,20 @@ volume <- data.frame(as.Date(volume$DATE), volume$USO.Volume)
 colnames(volume) <- c("DATE", "Volume")
 #Merge the Volume data with the other data
 USO <- merge(USO, volume, by = "DATE")
+
+#----------------------More Date Manipulation----------------#
 #Remove rows with NA
 USO <- na.omit(USO)
 
+USO <- USO %>% 
+  mutate(Date = as.Date(DATE)) %>% 
+  complete(Date = seq.Date(min(DATE), max(DATE), by="day"))
+
+# Now to forward fill the date
+USO <- na.locf(na.locf(USO), fromLast = TRUE)
+
+# Remove the additional date column
+USO <- subset(USO, select = -Date)
 
 #---------------------GARCH----------------------------------------------#
 err_garch = tseries::garch(x = USO$etf_asset_error, order = c(1,1))

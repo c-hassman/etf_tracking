@@ -1,6 +1,9 @@
 rm(list = ls())
 library(readxl)
 library(tidyverse)
+library(xts)
+library(tidyr)
+library(zoo)
 
 #-----------------Import Data from Excel and order------------#
 WEAT <- read_excel("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Data_Update.xlsx", 
@@ -17,14 +20,15 @@ WEAT <- read_excel("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Data_
                                                  "numeric", "numeric", "numeric", 
                                                  "numeric", "numeric", "numeric", 
                                                  "numeric", "numeric", "numeric"))
+#-------------------Date Manipulation and Cleaning----------------------#
 WEAT$DATE <- as.Date(WEAT$DATE, origin = "1899-12-30") 
 WEAT <- WEAT[order(WEAT$DATE),] #order by date
-WEAT$asset_basket <- (WEAT$`F1(.35)` * 0.35) + (WEAT$`F2(.3)` * 0.3) + (WEAT$`F3(.35)` * 0.35) #construct asset baskets
 
 #-----------------------Calculate Returns and Errors--------------#
-WEAT$per_asset_return <- log(WEAT$asset_basket/lag(WEAT$asset_basket)) #calculate percent asset return 
-WEAT$per_ETF_return <- log(WEAT$WEAT_MID/lag(WEAT$WEAT_MID)) #calculate percent ETF return
-WEAT$per_NAV_return <- log(WEAT$WEAT_NAV/lag(WEAT$WEAT_NAV)) #calculate percent NAV return
+WEAT$asset_basket <- (WEAT$`F1(.35)` * 0.35) + (WEAT$`F2(.3)` * 0.3) + (WEAT$`F3(.35)` * 0.35) #construct asset baskets
+WEAT$per_asset_return <- log(WEAT$asset_basket/lag(WEAT$asset_basket)) * 100 #calculate percent asset return 
+WEAT$per_ETF_return <- log(WEAT$WEAT_MID/lag(WEAT$WEAT_MID)) * 100#calculate percent ETF return
+WEAT$per_NAV_return <- log(WEAT$WEAT_NAV/lag(WEAT$WEAT_NAV)) * 100 #calculate percent NAV return
 WEAT$etf_asset_error <- WEAT$per_ETF_return - WEAT$per_asset_return #calculate percent ETF return
 
 #-----------------------Add ETF Volume Data-----------------------#
@@ -36,9 +40,20 @@ volume <- data.frame(as.Date(volume$DATE), volume$WEAT.Volume)
 colnames(volume) <- c("DATE", "Volume")
 #Merge the Volume data with the other data
 WEAT <- merge(WEAT, volume, by = "DATE")
+
+#----------------------More Date Manipulation----------------#
 #Remove rows with NA
 WEAT <- na.omit(WEAT) #Omit Rows with NAs
 
+WEAT <- WEAT %>% 
+  mutate(Date = as.Date(DATE)) %>% 
+  complete(Date = seq.Date(min(DATE), max(DATE), by="day"))
+
+# Now to forward fill the date
+WEAT <- na.locf(na.locf(WEAT), fromLast = TRUE)
+
+# Remove the additional date column
+WEAT <- subset(WEAT, select = -Date)
 
 #---------------------GARCH----------------------------------------------#
 err_garch = tseries::garch(x = WEAT$etf_asset_error, order = c(1,1))
