@@ -5,6 +5,7 @@ library(ggthemes)
 library(xts)
 library(tidyr)
 library(zoo)
+library(rugarch)
 
 
 #-----------------Import Data from Excel and order------------#
@@ -50,7 +51,8 @@ volume <- data.frame(as.Date(volume$DATE), volume$CORN.Volume)
 colnames(volume) <- c("DATE", "Volume")
 #Merge the Volume data with the other data
 CORN <- merge(CORN, volume, by = "DATE")
-
+# calculate percent change in volume
+CORN$volume_return <-log(CORN$Volume/lag(CORN$Volume)) * 100
 #----------------------More Date Manipulation----------------#
 # The code below handles the issue of roll dates and using a continous time model
 # with things which dont trade on the weekend. 
@@ -69,33 +71,47 @@ CORN <- CORN %>%
 CORN <- na.locf(na.locf(CORN), fromLast = TRUE)
 
 # Remove the additional date column
-CORN <- subset(CORN, select = -Date)
+CORN <- subset(CORN, select = -DATE)
 
-#---------------------GARCH----------------------------------------------#
-err_garch = tseries::garch(x = CORN$etf_asset_error, order = c(1,1))
-summary(err_garch)
+# Convert the object into a XTS object
+CORN.xts <- as.xts(CORN, order.by = CORN$Date)
 
-#--GARCH Volatility Graph
-# This graphs the Volatility from the GARCH model versus the market returns
-vol = err_garch$fitted.values # assign the fitted values to a variable
-vol = data.frame(vol) # convert to a dataframe
-vol$Volatility = vol$sigt # Create a new column of sigt squared
-vol$Date = CORN$DATE # Assign the date column from corn to vol
-vol$Error = CORN$etf_asset_error^2 # add the per asset returns
-# Convert the data to a long format
-vol_long <- vol %>%
-  select(Date, Volatility, Error) %>%
-  gather(key = 'variable', value = 'value', -Date)
+#--------------GARCH--------------------#
 
-# Make Graph
-ggplot(vol_long, aes(x = Date, y = value)) + 
-  geom_line(aes(color = variable)) + 
-  scale_color_manual(values = c("darkred", "steelblue")) +
-  facet_grid(rows = vars(variable), scales = "free") +
-  theme_bw() + theme(legend.position = "none") +
-  ylab("Percent (%)") + ggtitle("CORN Spread^2 and Volatility Plot")
+ext_reg <- CORN.xts # creates a new xts object to hold external regressors
 
-#_--------------------ACF and PACF Plots----------------------------------#
-CORN_Error <- CORN$etf_asset_error
-acf(CORN_Error)
-pacf(CORN_Error)
+# The code below removes all the columns which are not external regressors. 
+# There must be a better way to do this
+ext_reg$Date <- NULL
+ext_reg$CORN_MID <- NULL
+ext_reg$`F1(.35)` <- NULL
+ext_reg$`F2(.3)` <- NULL
+ext_reg$`F3(.35)` <- NULL
+ext_reg$CORN_NAV <- NULL
+ext_reg$ROLL <- NULL
+ext_reg$`C Jan` <- NULL
+ext_reg$`C 2012` <- NULL
+ext_reg$etf_asset_error<- NULL
+ext_reg$per_NAV_return <- NULL
+ext_reg$per_ETF_return <- NULL
+ext_reg$asset_basket <- NULL
+ext_reg$Volume <- NULL
+
+# Define the model
+model_spec <- ugarchspec(variance.model = list(model = 'eGARCH', garchOrder = c(1,1), 
+                                               external.regressors = ext_reg))
+# Fit the model and display results
+fit <- ugarchfit(data = CORN.xts$etf_asset_error, spec = model_spec)
+
+fit
+#This returns the conditional variance
+fit@fit[["sigma"]]
+
+
+simple_model <- ugarchspec(variance.model = list(model = 'eGARCH', garchOrder = c(1,1)))
+simple_fit <- ugarchfit(data = CORN.xts$etf_asset_error, spec = simple_model)
+simple_fit
+
+
+
+
