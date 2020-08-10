@@ -6,6 +6,7 @@ library(xts)
 library(tidyr)
 library(zoo)
 library(rugarch)
+library(skedastic)
 
 
 #-----------------Import Data from Excel and order------------#
@@ -76,6 +77,22 @@ CORN <- subset(CORN, select = -DATE)
 # Convert the object into a XTS object
 CORN.xts <- as.xts(CORN, order.by = CORN$Date)
 
+#======================
+model <- lm(abs(CORN$etf_asset_error) ~ abs(CORN$per_asset_return) + CORN$`C WASDE` + CORN$`C WASDE + CP` +
+              CORN$`C Grain Stocks` + CORN$`C Prospective Plantings` + CORN$`C Acreage Report` + 
+              CORN$`C Cattle on Feed` + CORN$`C Hogs & Pigs` + CORN$`C Day Before Roll` + CORN$`C Day After Roll`+
+              CORN$`C Feb` + CORN$`C Mar` + CORN$`C April` + CORN$`C May` + CORN$`C June` + CORN$`C July` +
+              CORN$`C Aug` + CORN$`C Sept` + CORN$`C Oct` + CORN$`C Nov` + CORN$`C Dec` + CORN$`C 2013` +
+              CORN$`C 2014` + CORN$`C 2015` + CORN$`C 2016` + CORN$`C 2017` + CORN$`C 2018` + CORN$`C 2019` +
+              CORN$`C 2020`)
+summary(model)
+
+coefficients(model)
+
+white_lm(model)
+breusch_pagan(model)
+
+
 #--------------GARCH--------------------#
 
 ext_reg <- CORN.xts # creates a new xts object to hold external regressors
@@ -97,6 +114,8 @@ ext_reg$per_ETF_return <- NULL
 ext_reg$asset_basket <- NULL
 ext_reg$Volume <- NULL
 
+ext_reg$per_asset_return <- abs(as.numeric(ext_reg$per_asset_return))
+
 # Define the model
 model_spec <- ugarchspec(variance.model = list(model = 'eGARCH', garchOrder = c(1,1), 
                                                external.regressors = ext_reg))
@@ -108,7 +127,7 @@ fit
 fit@fit[["sigma"]]
 
 
-simple_model <- ugarchspec(variance.model = list(model = 'eGARCH', garchOrder = c(1,1)))
+simple_model <- ugarchspec(variance.model = list(model = 'apARCH'))
 simple_fit <- ugarchfit(data = CORN.xts$etf_asset_error, spec = simple_model)
 simple_fit
 
