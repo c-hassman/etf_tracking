@@ -80,8 +80,11 @@ CORN <- subset(CORN, select = -DATE)
 CORN.xts <- as.xts(CORN, order.by = CORN$Date)
 
 #===================================================================#
-# I will create a dataframe to store the residuals from each model
-
+# Plot the ETF_ASSET_ERRORS
+qplot(CORN$Date, CORN$etf_asset_error, geom = 'line') + ggtitle("CORN: ETF % Return - Asset % Return") + 
+  ylab('Error') + xlab('Date') + theme_bw()
+qplot(CORN$Date, CORN$etf_asset_error^2, geom = 'line') + ggtitle('CORN: (ETF % Return - Asset % Return)^2') +
+  ylab('Squared Error') + xlab('Date') + theme_bw()
 
 # Simple beta model
 beta_ols = lm(per_asset_return ~ per_ETF_return, data = CORN)
@@ -153,9 +156,13 @@ fit <- ugarchfit(data = CORN.xts$etf_asset_error, spec = model_spec)
 
 fit
 #This returns the conditional variance
-fit@fit[["sigma"]]
-qplot(CORN$Date, fit@fit[['residuals']]^2, geom = 'line')
-qplot(CORN$Date, fit@fit[['sigma']], geom = 'line')
+
+qplot(CORN$Date, fit@fit[['residuals']], geom = 'line') + ggtitle('apARCH(1,1) Model Residuals') + ylab('Residuals') +
+  xlab('Date') + theme_bw()
+qplot(CORN$Date, fit@fit[['residuals']]^2, geom = 'line') + ggtitle('apARCH(1,1) Model Residuals^2') + ylab('Squared Residuals') + 
+  xlab('Date') + theme_bw()
+qplot(CORN$Date, fit@fit[['sigma']], geom = 'line') + ggtitle('apARCH(1,1) Conditional Variance') + ylab('h') + xlab('Date') +
+  theme_bw()
 
 
 
