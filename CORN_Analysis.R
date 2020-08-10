@@ -9,6 +9,8 @@ library(rugarch)
 library(skedastic)
 
 
+
+
 #-----------------Import Data from Excel and order------------#
 CORN <- read_excel("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Data_Update.xlsx", 
                    sheet = "CORN", col_types = c("numeric", 
@@ -77,7 +79,33 @@ CORN <- subset(CORN, select = -DATE)
 # Convert the object into a XTS object
 CORN.xts <- as.xts(CORN, order.by = CORN$Date)
 
-#======================
+#===================================================================#
+# I will create a dataframe to store the residuals from each model
+
+
+# Simple beta model
+beta_ols = lm(per_asset_return ~ per_ETF_return, data = CORN)
+summary(beta_ols)
+lmtest::bptest(beta_ols)
+qplot(CORN$Date, beta_ols$residuals, geom = 'line') + ggtitle("CORN: Residuals from Beta Model") + 
+  ylab("Residuals") + xlab('Date') + theme_bw()
+qplot(CORN$Date, beta_ols$residuals^2, geom = 'line') + ggtitle('CORN: Squared Residuals from Beta Model') +
+  ylab('Squared Residuals') + xlab('Date') + theme_bw()
+
+
+
+# Simple OlS Model
+simple_ols = lm(abs(etf_asset_error) ~ abs(per_asset_return), data = CORN)
+summary(simple_ols)
+lmtest::bptest(simple_ols)
+qplot(CORN$Date, simple_ols$residuals, geom = 'line') + ggtitle("CORN: Residuals from Simple OLS Model") + 
+  ylab("Residuals") + xlab('Date') + theme_bw()
+qplot(CORN$Date, simple_ols$residuals^2, geom = 'line') + ggtitle('CORN: Squared Residuals from Simple OLS Model') +
+  ylab('Squared Residuals') + xlab('Date') + theme_bw()
+
+
+
+# Dummy Model
 model <- lm(abs(CORN$etf_asset_error) ~ abs(CORN$per_asset_return) + CORN$`C WASDE` + CORN$`C WASDE + CP` +
               CORN$`C Grain Stocks` + CORN$`C Prospective Plantings` + CORN$`C Acreage Report` + 
               CORN$`C Cattle on Feed` + CORN$`C Hogs & Pigs` + CORN$`C Day Before Roll` + CORN$`C Day After Roll`+
@@ -86,11 +114,12 @@ model <- lm(abs(CORN$etf_asset_error) ~ abs(CORN$per_asset_return) + CORN$`C WAS
               CORN$`C 2014` + CORN$`C 2015` + CORN$`C 2016` + CORN$`C 2017` + CORN$`C 2018` + CORN$`C 2019` +
               CORN$`C 2020`)
 summary(model)
+lmtest::bptest(model)
+qplot(CORN$Date, model$residuals, geom = 'line') + ggtitle("CORN: Residuals from Dummy Model") + 
+  ylab("Residuals") + xlab('Date') + theme_bw()
+qplot(CORN$Date, model$residuals^2, geom = 'line') + ggtitle('CORN: Squared Residuals from Dummy Model') +
+  ylab('Squared Residuals') + xlab('Date') + theme_bw()
 
-coefficients(model)
-
-white_lm(model)
-breusch_pagan(model)
 
 
 #--------------GARCH--------------------#
@@ -117,19 +146,17 @@ ext_reg$Volume <- NULL
 ext_reg$per_asset_return <- abs(as.numeric(ext_reg$per_asset_return))
 
 # Define the model
-model_spec <- ugarchspec(variance.model = list(model = 'eGARCH', garchOrder = c(1,1), 
-                                               external.regressors = ext_reg))
+model_spec <- ugarchspec(variance.model = list(model = 'apARCH', garchOrder = c(1,1)))
+
 # Fit the model and display results
 fit <- ugarchfit(data = CORN.xts$etf_asset_error, spec = model_spec)
 
 fit
 #This returns the conditional variance
 fit@fit[["sigma"]]
+qplot(CORN$Date, fit@fit[['residuals']]^2, geom = 'line')
+qplot(CORN$Date, fit@fit[['sigma']], geom = 'line')
 
-
-simple_model <- ugarchspec(variance.model = list(model = 'apARCH'))
-simple_fit <- ugarchfit(data = CORN.xts$etf_asset_error, spec = simple_model)
-simple_fit
 
 
 
