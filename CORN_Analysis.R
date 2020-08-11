@@ -153,9 +153,8 @@ model_spec <- ugarchspec(variance.model = list(model = 'apARCH', garchOrder = c(
 
 # Fit the model and display results
 fit <- ugarchfit(data = CORN.xts$etf_asset_error, spec = model_spec)
-
 fit
-#This returns the conditional variance
+
 
 qplot(CORN$Date, fit@fit[['residuals']], geom = 'line') + ggtitle('apARCH(1,1) Model Residuals') + ylab('Residuals') +
   xlab('Date') + theme_bw()
