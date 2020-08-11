@@ -4,6 +4,7 @@ library(tidyverse)
 library(xts)
 library(tidyr)
 library(zoo)
+library(rugarch)
 #-----------------Import Data from Excel and order------------#
 UGA <- read_excel("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Data_Update.xlsx", 
                   sheet = "UGA", col_types = c("numeric", 
@@ -54,35 +55,66 @@ UGA <- na.locf(na.locf(UGA), fromLast = TRUE)
 # Remove the additional date column
 UGA <- subset(UGA, select = -Date)
 
-#---------------------GARCH----------------------------------------------#
-err_garch = tseries::garch(x = UGA$etf_asset_error, order = c(1,1))
-summary(err_garch)   
+# Create an XTS object
+UGA.xts <- as.xts(UGA, order.by = UGA$DATE)
 
-#--GARCH Volatility Graph
-# This graphs the Volatility from the GARCH model versus the market returns
-vol = err_garch$fitted.values # assign the fitted values to a variable
-vol = data.frame(vol) # convert to a dataframe
-vol$Volatility = vol$sigt # Create a new column of sigt squared
-vol$Date = UGA$DATE # Assign the date column from corn to vol
-vol$Error = UGA$etf_asset_error^2 # add the per asset returns
+#===================================================================#
+# pl,ot the ETF_ASSET_Errors
+qplot(UGA$DATE, UGA$etf_asset_error, geom ='line') + ggtitle('UGA: ETF% Return - Asset % Return') +
+  ylab('Error') + xlab('Date') + theme_bw()
+qplot(UGA$DATE, UGA$etf_asset_error^2, geom ='line') + ggtitle('UGA: (ETF% Return - Asset % Return)^2') +
+  ylab('Squared Error') + xlab('Date') + theme_bw()
 
-# Convert the data to a long format
-vol_long <- vol %>%
-  select(Date, Volatility, Error) %>%
-  gather(key = 'variable', value = 'value', -Date)
+# Simple Beta model
+beta_ols = lm(per_asset_return ~ per_ETF_return, data = UGA)
+summary(beta_ols)
+lmtest::bptest(beta_ols)
+qplot(UGA$DATE, beta_ols$residuals, geom = 'line') + ggtitle('UGA: Residuals from Beta Model') +
+  ylab('Residuals') + xlab('Date') + theme_bw()
+qplot(UGA$DATE, beta_ols$residuals^2, geom = 'line') + ggtitle('UGA: Squared Residuals from Beta Model') +
+  ylab('Squared Residuals') + xlab('Date') + theme_bw()
 
-# Make Graph
-ggplot(vol_long, aes(x = Date, y = value)) + 
-  geom_line(aes(color = variable)) + 
-  scale_color_manual(values = c("darkred", "steelblue")) +
-  facet_grid(rows = vars(variable), scales = "free") +
-  theme_bw() + theme(legend.position = "none") +
-  ylab("Percent (%)") + ggtitle("UGA Spread^2 and Volatility Plot")
+# simple OLS
+simple_ols = lm(abs(etf_asset_error) ~ abs(per_asset_return), data = UGA)
+summary(simple_ols)
+lmtest::bptest(simple_ols)
+qplot(UGA$DATE, simple_ols$residuals, geom = 'line') + ggtitle('UGA: Residuals from Simple OLS Model') +
+  xlab('Date') + ylab('Residuals') + theme_bw()
+qplot(UGA$DATE, simple_ols$residuals^2, geom = 'line') + ggtitle('UGA: Squared Residuals from Simple OLS Model') +
+  xlab('Date') + ylab('Squared Residuals') + theme_bw()
+
+# Dummy Model
+model <- lm(abs(UGA$etf_asset_error) ~ abs(UGA$per_ETF_return) + UGA$`RB Day Before Roll` + UGA$`RB Day After Roll` +
+              UGA$`RB Feb` + UGA$`RB Mar` + UGA$`RB April` + UGA$`RB May` + UGA$`RB June` + UGA$`RB July` +
+              UGA$`RB Aug` + UGA$`RB Sept` + UGA$`RB Oct` + UGA$`RB Nov` + UGA$`RB Dec` + UGA$`RB 2013` +
+              UGA$`RB 2014` + UGA$`RB 2015` + UGA$`RB 2016` + UGA$`RB 2017` + UGA$`RB 2018` + UGA$`RB 2019` +
+              UGA$`RB 2020` + UGA$`RB STEO` + UGA$`RB Drilling Prod` + UGA$`RB Petro Supply/Prod` + UGA$`RB Annual Energy Outlook`)
+summary(model)            
+lmtest::bptest(model)
+qplot(UGA$DATE, model$residuals, geom = 'line') + ggtitle('UGA: Residuals from Dummy Model') + 
+  ylab('Residuals') + xlab('Date') + theme_bw()
+qplot(UGA$DATE, model$residuals^2, geom = 'line') + ggtitle('UGA: Squared Residuals from Dummy Model') + 
+  ylab('Squared Residuals') + xlab('Date') + theme_bw()
+
+#------------GARCH---------#
+
+# Define the model
+model_spec <- ugarchspec(variance.model = list(model = 'apARCH', garchOrder = c(1,1)))
+
+# Fit the model and display results
+fit <- ugarchfit(data = UGA.xts$etf_asset_error, spec = model_spec)
+fit
 
 
-#_--------------------ACF and PACF Plots----------------------------------#
-UGA_Error <- UGA$etf_asset_error
-acf(UGA_Error)
-pacf(UGA_Error)
+qplot(UGA$DATE, fit@fit[['residuals']], geom = 'line') + ggtitle('UGA: apARCH(1,1) Model Residuals') + ylab('Residuals') +
+  xlab('Date') + theme_bw()
+qplot(UGA$DATE, fit@fit[['residuals']]^2, geom = 'line') + ggtitle('UGA: apARCH(1,1) Model Residuals^2') + ylab('Squared Residuals') + 
+  xlab('Date') + theme_bw()
+qplot(UGA$DATE, fit@fit[['sigma']], geom = 'line') + ggtitle('apARCH(1,1) Conditional Variance') + ylab('h') + xlab('Date') +
+  theme_bw()
 
-              
+
+
+
+
+
