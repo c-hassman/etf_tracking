@@ -9,7 +9,7 @@ library(xts)
 rm(list = ls())
 #Assign arguments
 start_date <- "2012-01-01"
-end_date <- '2020-02-10'
+end_date <- '2020-07-31'
 symbols <- c("CORN", 'SOYB', 'WEAT', 'UGA', 'USO')
 
 #Pull Data from Yahoo Finance

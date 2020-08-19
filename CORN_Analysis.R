@@ -7,7 +7,7 @@ library(tidyr)
 library(zoo)
 library(rugarch)
 library(skedastic)
-
+library(fpp2)
 
 
 
@@ -52,7 +52,7 @@ volume <- read.csv("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Volum
 volume <- data.frame(as.Date(volume$DATE), volume$CORN.Volume)
 #rename the columns
 colnames(volume) <- c("DATE", "Volume")
-#Merge the Volume data with the other data
+ #Merge the Volume data with the other data
 CORN <- merge(CORN, volume, by = "DATE")
 # calculate percent change in volume
 CORN$volume_return <-log(CORN$Volume/lag(CORN$Volume)) * 100
@@ -65,10 +65,6 @@ CORN <- na.omit(CORN)
 
 # Remove after roll days 
 CORN<- CORN[! (CORN$`C Day After Roll` == '1'),]
-
-
-
-
 
 
 # This creates rows of NA's for all the missing days, including weekends, holidays,
@@ -84,9 +80,11 @@ CORN <- na.locf(na.locf(CORN), fromLast = TRUE)
 # Remove the additional date column
 CORN <- subset(CORN, select = -DATE)
 
+CORN <- na.omit(CORN) 
 # Convert the object into a XTS object
-CORN.xts <- as.xts(CORN, order.by = CORN$Date)
+CORN.xts <- xts(CORN[,-1], order.by = CORN$Date)
 
+typeof(CORN.xts$ROLL)
 #---------------------Descriptive Statistics of Asset Error------#
 
 mean(CORN$etf_asset_error, na.rm = TRUE)
@@ -95,7 +93,7 @@ e1071::skewness(CORN$etf_asset_error, na.rm = TRUE)
 e1071::kurtosis(CORN$etf_asset_error, na.rm = TRUE)
 max(CORN$etf_asset_error, na.rm = TRUE)
 min(CORN$etf_asset_error, na.rm = TRUE)
-nrow(CORN$etf_asset_error, na.rm = TRUE)
+
 #===================================================================#
 #-----ETF and Asset Basket Prices
 etfcolor <- "black"
@@ -130,55 +128,26 @@ qplot(CORN$Date, CORN$etf_asset_error^2, geom = 'line') + ggtitle('CORN: Squared
 
 
 #----Augmented Dickey Fuller Test on Returns
+tseries::adf.test(CORN$per_ETF_return)
+tseries::adf.test(CORN$per_NAV_return)
 
+#==================================================================
+#--ARMA Model for Tracking Error
 
+auto.arima(CORN$etf_asset_error)
+acf(CORN$etf_asset_error)
+pacf(CORN$etf_asset_error)
+arima(CORN$etf_asset_error, order = c(3,0,3))
 
-# Simple beta model
-beta_ols = lm(per_asset_return ~ per_ETF_return, data = CORN)
-summary(beta_ols)
-lmtest::bptest(beta_ols)
-qplot(CORN$Date, beta_ols$residuals, geom = 'line') + ggtitle("CORN: Residuals from Beta Model") + 
-  ylab("Residuals") + xlab('Date') + theme_bw()
-qplot(CORN$Date, beta_ols$residuals^2, geom = 'line') + ggtitle('CORN: Squared Residuals from Beta Model') +
-  ylab('Squared Residuals') + xlab('Date') + theme_bw()
-
-
-
-# Simple OlS Model
-simple_ols = lm(abs(etf_asset_error) ~ abs(per_asset_return), data = CORN)
-summary(simple_ols)
-lmtest::bptest(simple_ols)
-qplot(CORN$Date, simple_ols$residuals, geom = 'line') + ggtitle("CORN: Residuals from Simple OLS Model") + 
-  ylab("Residuals") + xlab('Date') + theme_bw()
-qplot(CORN$Date, simple_ols$residuals^2, geom = 'line') + ggtitle('CORN: Squared Residuals from Simple OLS Model') +
-  ylab('Squared Residuals') + xlab('Date') + theme_bw()
-
-
-
-# Dummy Model
-model <- lm(abs(CORN$etf_asset_error) ~ abs(CORN$per_asset_return) + CORN$`C WASDE` + CORN$`C WASDE + CP` +
-              CORN$`C Grain Stocks` + CORN$`C Prospective Plantings` + CORN$`C Acreage Report` + 
-              CORN$`C Cattle on Feed` + CORN$`C Hogs & Pigs` + CORN$`C Day Before Roll` + CORN$`C Day After Roll`+
-              CORN$`C Feb` + CORN$`C Mar` + CORN$`C April` + CORN$`C May` + CORN$`C June` + CORN$`C July` +
-              CORN$`C Aug` + CORN$`C Sept` + CORN$`C Oct` + CORN$`C Nov` + CORN$`C Dec` + CORN$`C 2013` +
-              CORN$`C 2014` + CORN$`C 2015` + CORN$`C 2016` + CORN$`C 2017` + CORN$`C 2018` + CORN$`C 2019` +
-              CORN$`C 2020`)
-summary(model)
-lmtest::bptest(model)
-qplot(CORN$Date, model$residuals, geom = 'line') + ggtitle("CORN: Residuals from Dummy Model") + 
-  ylab("Residuals") + xlab('Date') + theme_bw()
-qplot(CORN$Date, model$residuals^2, geom = 'line') + ggtitle('CORN: Squared Residuals from Dummy Model') +
-  ylab('Squared Residuals') + xlab('Date') + theme_bw()
 
 
 
 #--------------GARCH--------------------#
 
-ext_reg <- CORN.xts # creates a new xts object to hold external regressors
+ext_reg <- CORN.xts# creates a new xts object to hold external regressors
+#ext_reg <- merge(ext_reg, CORN.xts$`C WASDE + CP`, CORN.xts$`C Grain Stocks`, CORN.xts$`C Prospective Plantings`, 
+#                 CORN.xts$`C Acreage Report`, CORN.xts$`C Cattle on Feed`, CORN.xts$`C Hogs & Pigs`)
 
-# The code below removes all the columns which are not external regressors. 
-# There must be a better way to do this
-ext_reg$Date <- NULL
 ext_reg$CORN_MID <- NULL
 ext_reg$`F1(.35)` <- NULL
 ext_reg$`F2(.3)` <- NULL
@@ -192,17 +161,36 @@ ext_reg$per_NAV_return <- NULL
 ext_reg$per_ETF_return <- NULL
 ext_reg$asset_basket <- NULL
 ext_reg$Volume <- NULL
+ext_reg$`C Day Before Roll` <- NULL
+ext_reg$`C Day After Roll` <-NULL
+ext_reg$volume_return < NULL
 
 ext_reg$per_asset_return <- abs(as.numeric(ext_reg$per_asset_return))
 
+typeof(CORN.xts$`C Day Before Roll`)
+typeof(CORN.xts$`C Day After Roll`)
+
+
 # Define the model
-model_spec <- ugarchspec(variance.model = list(model = 'apARCH', garchOrder = c(1,1)))
+model_spec <- ugarchspec(variance.model = list(model = 'apARCH', garchOrder = c(1,1), 
+                                               external.regressors = ext_reg))
 
 # Fit the model and display results
 fit <- ugarchfit(data = CORN.xts$etf_asset_error, spec = model_spec)
 fit
 
 
+#=========Residual Disgnostics========#
+par(mfrow = c(2,2))
+plot(CORN$Date, fit@fit[['residuals']], type= 'line') + ylab('Residuals') +
+  xlab('Date') + theme_bw() 
+hist(fit@fit[['residuals']]) + theme_bw() 
+acf(fit@fit[['residuals']]) 
+qqnorm(fit@fit[['residuals']]) 
+qqline(fit@fit[['residuals']])
+
+
+#=========Residuals and Conditional Variance======#
 qplot(CORN$Date, fit@fit[['residuals']], geom = 'line') + ggtitle('apARCH(1,1) Model Residuals') + ylab('Residuals') +
   xlab('Date') + theme_bw()
 qplot(CORN$Date, fit@fit[['residuals']]^2, geom = 'line') + ggtitle('apARCH(1,1) Model Residuals^2') + ylab('Squared Residuals') + 
