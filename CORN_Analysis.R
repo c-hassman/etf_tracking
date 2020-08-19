@@ -62,11 +62,6 @@ CORN$volume_return <-log(CORN$Volume/lag(CORN$Volume)) * 100
 
 #Remove rows with NAsm which has the effect of deleting roll days
 CORN <- na.omit(CORN) 
-
-# Remove after roll days 
-CORN<- CORN[! (CORN$`C Day After Roll` == '1'),]
-
-
 # This creates rows of NA's for all the missing days, including weekends, holidays,
 # and the roll days we just deleted. Not sure why I have to create another "Date"
 # column but that is the only way I could get it to work
@@ -143,11 +138,11 @@ arima(CORN$etf_asset_error, order = c(3,0,3))
 
 
 #--------------GARCH--------------------#
+ext_reg <- CORN.xts # creates a new xts object to hold external regressors
 
-ext_reg <- CORN.xts# creates a new xts object to hold external regressors
-#ext_reg <- merge(ext_reg, CORN.xts$`C WASDE + CP`, CORN.xts$`C Grain Stocks`, CORN.xts$`C Prospective Plantings`, 
-#                 CORN.xts$`C Acreage Report`, CORN.xts$`C Cattle on Feed`, CORN.xts$`C Hogs & Pigs`)
-
+# The code below removes all the columns which are not external regressors. 
+# There must be a better way to do this
+ext_reg$Date <- NULL
 ext_reg$CORN_MID <- NULL
 ext_reg$`F1(.35)` <- NULL
 ext_reg$`F2(.3)` <- NULL
@@ -161,23 +156,18 @@ ext_reg$per_NAV_return <- NULL
 ext_reg$per_ETF_return <- NULL
 ext_reg$asset_basket <- NULL
 ext_reg$Volume <- NULL
-ext_reg$`C Day Before Roll` <- NULL
-ext_reg$`C Day After Roll` <-NULL
-ext_reg$volume_return < NULL
 
-ext_reg$per_asset_return <- abs(as.numeric(ext_reg$per_asset_return))
-
-typeof(CORN.xts$`C Day Before Roll`)
-typeof(CORN.xts$`C Day After Roll`)
-
-
+#
 # Define the model
-model_spec <- ugarchspec(variance.model = list(model = 'apARCH', garchOrder = c(1,1), 
+model_spec <- ugarchspec(variance.model = list(model = 'apARCH', garchOrder = c(3,1), 
                                                external.regressors = ext_reg))
-
+#model_spec <- ugarchspec(mean.model = list(armaOrder = c(3,0)))
 # Fit the model and display results
 fit <- ugarchfit(data = CORN.xts$etf_asset_error, spec = model_spec)
+
 fit
+
+
 
 
 #=========Residual Disgnostics========#
