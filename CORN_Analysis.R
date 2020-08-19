@@ -37,13 +37,13 @@ CORN$DATE <- as.Date(CORN$DATE, origin = "1899-12-30")
 # The data is imported in excel date numbers, which is why I need to set the origin to the proper amount
 CORN <- CORN[order(CORN$DATE),] # order by date
 
-
 #-----------------------Calculate Returns and Errors--------------#
 CORN$asset_basket <- (CORN$`F1(.35)` * 0.35) + (CORN$`F2(.3)` * 0.3) + (CORN$`F3(.35)` * 0.35) #reconstruct asset basket
 CORN$per_asset_return <- log(CORN$asset_basket/lag(CORN$asset_basket))* 100 # calculate percent asset basket return
 CORN$per_ETF_return <- log(CORN$CORN_MID/lag(CORN$CORN_MID)) * 100#calculate percent ETF return
 CORN$per_NAV_return <- log(CORN$CORN_NAV/lag(CORN$CORN_NAV)) * 100#calculate percent NAV return
 CORN$etf_asset_error <- CORN$per_ETF_return - CORN$per_asset_return #calculate error between ETF and Asset
+
 
 #-----------------------Add ETF Volume Data-----------------------#
 # Import volume data from csv
@@ -63,6 +63,14 @@ CORN$volume_return <-log(CORN$Volume/lag(CORN$Volume)) * 100
 #Remove rows with NAsm which has the effect of deleting roll days
 CORN <- na.omit(CORN) 
 
+# Remove after roll days 
+CORN<- CORN[! (CORN$`C Day After Roll` == '1'),]
+
+
+
+
+
+
 # This creates rows of NA's for all the missing days, including weekends, holidays,
 # and the roll days we just deleted. Not sure why I have to create another "Date"
 # column but that is the only way I could get it to work
@@ -79,12 +87,51 @@ CORN <- subset(CORN, select = -DATE)
 # Convert the object into a XTS object
 CORN.xts <- as.xts(CORN, order.by = CORN$Date)
 
+#---------------------Descriptive Statistics of Asset Error------#
+
+mean(CORN$etf_asset_error, na.rm = TRUE)
+sd(CORN$etf_asset_error, na.rm = TRUE)
+e1071::skewness(CORN$etf_asset_error, na.rm = TRUE)
+e1071::kurtosis(CORN$etf_asset_error, na.rm = TRUE)
+max(CORN$etf_asset_error, na.rm = TRUE)
+min(CORN$etf_asset_error, na.rm = TRUE)
+nrow(CORN$etf_asset_error, na.rm = TRUE)
 #===================================================================#
+#-----ETF and Asset Basket Prices
+etfcolor <- "black"
+assetcolor <- "darkgrey"
+coeff <- CORN$asset_basket[1] / CORN$CORN_MID[1]
+ggplot(data = CORN, aes(x = Date)) +
+  geom_line(aes(y = CORN_MID), color = etfcolor) +
+  geom_line(aes(y = asset_basket / coeff), color = assetcolor) +
+  scale_y_continuous(
+    name = "ETF Price ($)", 
+    sec.axis = sec_axis(~.*coeff, name = "Asset Basket Price (cents per bushel)")
+  ) + theme_bw() + ggtitle("CORN ETF and Asset Basket Price") + xlab("Date") 
+
+#-----ETF Returns
+qplot(CORN$Date, CORN$per_ETF_return, geom = 'line') + ggtitle("CORN: ETF % Return") + 
+  ylab('Log Percent Return') + xlab('Date') + theme_bw()
+
+#-----Asset Returns
+qplot(CORN$Date, CORN$per_asset_return, geom = 'line') + ggtitle("CORN: Asset Basket % Return") + 
+  ylab('Log Percent Return') + xlab('Date') + theme_bw()
+
 # Plot the ETF_ASSET_ERRORS
-qplot(CORN$Date, CORN$etf_asset_error, geom = 'line') + ggtitle("CORN: ETF % Return - Asset % Return") + 
+qplot(CORN$Date, CORN$etf_asset_error, geom = 'line') + ggtitle("CORN: Tracking Error") + 
   ylab('Error') + xlab('Date') + theme_bw()
-qplot(CORN$Date, CORN$etf_asset_error^2, geom = 'line') + ggtitle('CORN: (ETF % Return - Asset % Return)^2') +
+qplot(CORN$Date, CORN$etf_asset_error^2, geom = 'line') + ggtitle('CORN: Squared Tracking Error') +
   ylab('Squared Error') + xlab('Date') + theme_bw()
+
+
+#==============================================================
+#--- Description of Returns
+
+
+
+#----Augmented Dickey Fuller Test on Returns
+
+
 
 # Simple beta model
 beta_ols = lm(per_asset_return ~ per_ETF_return, data = CORN)
