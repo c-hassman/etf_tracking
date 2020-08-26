@@ -75,11 +75,48 @@ CORN <- na.locf(na.locf(CORN), fromLast = TRUE)
 # Remove the additional date column
 CORN <- subset(CORN, select = -DATE)
 
-CORN <- na.omit(CORN) 
+#CORN <- na.omit(CORN) 
 # Convert the object into a XTS object
 CORN.xts <- xts(CORN[,-1], order.by = CORN$Date)
 
-typeof(CORN.xts$ROLL)
+ext_reg <- CORN.xts # creates a new xts object to hold external regressors
+
+# The code below removes all the columns which are not external regressors. 
+# There must be a better way to do this
+#ext_reg$Date <- NULL
+ext_reg$CORN_MID <- NULL
+ext_reg$`F1(.35)` <- NULL
+ext_reg$`F2(.3)` <- NULL
+ext_reg$`F3(.35)` <- NULL
+ext_reg$CORN_NAV <- NULL
+ext_reg$ROLL <- NULL
+ext_reg$`C Jan` <- NULL
+ext_reg$`C 2012` <- NULL
+ext_reg$etf_asset_error<- NULL
+ext_reg$per_NAV_return <- NULL
+ext_reg$per_ETF_return <- NULL
+ext_reg$asset_basket <- NULL
+ext_reg$Volume <- NULL
+
+
+# Define the model
+model_spec <- ugarchspec(variance.model = list(model = 'gjrGARCH', garchOrder = c(3,1), 
+                                               external.regressors = ext_reg))
+setbounds(model_spec) <- list(vxreg1 = c(-100,100), vxreg2 = c(-100,100), vxreg3 = c(-100,100), vxreg4 = c(-100,100),
+                              vxreg5 = c(-100,100), vxreg6 = c(-100,100), vxreg7 = c(-100,100), vxreg8 = c(-100,100),
+                              vxreg9 = c(-100,100), vxreg10 = c(-100,100), vxreg11 = c(-100,100), vxreg12 = c(-100,100), 
+                              vxreg13 = c(-100,100), vxreg14 = c(-100,100), vxreg15 = c(-100,100), vxreg16 = c(-100,100),
+                              vxreg17 = c(-100,100), vxreg18 = c(-100,100), vxreg19 = c(-100,100), vxreg20 = c(-100,100), 
+                              vxreg21 = c(-100,100), vxreg22 = c(-100,100), vxreg23 = c(-100,100), vxreg24 = c(-100,100), 
+                              vxreg25 = c(-100,100), vxreg26 = c(-100,100), vxreg28 = c(-100,100), vxreg29 = c(-100,100),
+                              vxreg30 = c(-100,100))
+
+
+# Fit the model and display results
+fit <- ugarchfit(data = CORN.xts$etf_asset_error, spec = model_spec)
+
+fit
+
 #---------------------Descriptive Statistics of Asset Error------#
 
 mean(CORN$etf_asset_error, na.rm = TRUE)
@@ -142,7 +179,7 @@ ext_reg <- CORN.xts # creates a new xts object to hold external regressors
 
 # The code below removes all the columns which are not external regressors. 
 # There must be a better way to do this
-ext_reg$Date <- NULL
+#ext_reg$Date <- NULL
 ext_reg$CORN_MID <- NULL
 ext_reg$`F1(.35)` <- NULL
 ext_reg$`F2(.3)` <- NULL
@@ -157,9 +194,10 @@ ext_reg$per_ETF_return <- NULL
 ext_reg$asset_basket <- NULL
 ext_reg$Volume <- NULL
 
+typeof(ext_reg$`C WASDE`)
 #
 # Define the model
-model_spec <- ugarchspec(variance.model = list(model = 'apARCH', garchOrder = c(3,1), 
+model_spec <- ugarchspec(variance.model = list(model = 'gjrGARCH', garchOrder = c(3,1), 
                                                external.regressors = ext_reg))
 #model_spec <- ugarchspec(mean.model = list(armaOrder = c(3,0)))
 # Fit the model and display results

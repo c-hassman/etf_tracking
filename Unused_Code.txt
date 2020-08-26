@@ -4,6 +4,66 @@ This text document is made to store the unused code from ETF Tracking Error Anal
 ============================
 CORN
 ============================
+
+
+# Simple beta model
+beta_ols = lm(per_asset_return ~ per_ETF_return, data = CORN)
+summary(beta_ols)
+lmtest::bptest(beta_ols)
+qplot(CORN$Date, beta_ols$residuals, geom = 'line') + ggtitle("CORN: Residuals from Beta Model") + 
+  ylab("Residuals") + xlab('Date') + theme_bw()
+qplot(CORN$Date, beta_ols$residuals^2, geom = 'line') + ggtitle('CORN: Squared Residuals from Beta Model') +
+  ylab('Squared Residuals') + xlab('Date') + theme_bw()
+
+
+
+# Simple OlS Model
+simple_ols = lm(abs(etf_asset_error) ~ abs(per_asset_return), data = CORN)
+summary(simple_ols)
+lmtest::bptest(simple_ols)
+qplot(CORN$Date, simple_ols$residuals, geom = 'line') + ggtitle("CORN: Residuals from Simple OLS Model") + 
+  ylab("Residuals") + xlab('Date') + theme_bw()
+qplot(CORN$Date, simple_ols$residuals^2, geom = 'line') + ggtitle('CORN: Squared Residuals from Simple OLS Model') +
+  ylab('Squared Residuals') + xlab('Date') + theme_bw()
+
+
+
+# Dummy Model
+model <- lm(abs(CORN$etf_asset_error) ~ abs(CORN$per_asset_return) + CORN$`C WASDE` + CORN$`C WASDE + CP` +
+              CORN$`C Grain Stocks` + CORN$`C Prospective Plantings` + CORN$`C Acreage Report` + 
+              CORN$`C Cattle on Feed` + CORN$`C Hogs & Pigs` + CORN$`C Day Before Roll` + CORN$`C Day After Roll`+
+              CORN$`C Feb` + CORN$`C Mar` + CORN$`C April` + CORN$`C May` + CORN$`C June` + CORN$`C July` +
+              CORN$`C Aug` + CORN$`C Sept` + CORN$`C Oct` + CORN$`C Nov` + CORN$`C Dec` + CORN$`C 2013` +
+              CORN$`C 2014` + CORN$`C 2015` + CORN$`C 2016` + CORN$`C 2017` + CORN$`C 2018` + CORN$`C 2019` +
+              CORN$`C 2020`)
+summary(model)
+lmtest::bptest(model)
+qplot(CORN$Date, model$residuals, geom = 'line') + ggtitle("CORN: Residuals from Dummy Model") + 
+  ylab("Residuals") + xlab('Date') + theme_bw()
+qplot(CORN$Date, model$residuals^2, geom = 'line') + ggtitle('CORN: Squared Residuals from Dummy Model') +
+  ylab('Squared Residuals') + xlab('Date') + theme_bw()
+
+# The code below removes all the columns which are not external regressors. 
+# There must be a better way to do this
+#ext_reg$Date <- NULL
+ext_reg$CORN_MID <- NULL
+ext_reg$`F1(.35)` <- NULL
+ext_reg$`F2(.3)` <- NULL
+ext_reg$`F3(.35)` <- NULL
+ext_reg$CORN_NAV <- NULL
+ext_reg$ROLL <- NULL
+ext_reg$`C Jan` <- NULL
+ext_reg$`C 2012` <- NULL
+ext_reg$etf_asset_error<- NULL
+ext_reg$per_NAV_return <- NULL
+ext_reg$per_ETF_return <- NULL
+ext_reg$asset_basket <- NULL
+ext_reg$Volume <- NULL
+
+ext_reg$per_asset_return <- abs(as.numeric(ext_reg$per_asset_return))
+
+typeof(ext_reg$per_asset_return)
+
 #-----------------------Exploratory Plots-----------------------#
 #------ETF, Asset Basket Error
 qplot(CORN$DATE, (CORN$etf_asset_error * 100), geom = 'line') + theme_bw() +
