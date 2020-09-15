@@ -79,11 +79,55 @@ CORN <- subset(CORN, select = -DATE)
 # Convert the object into a XTS object
 CORN.xts <- xts(CORN[,-1], order.by = CORN$Date)
 
+#=====ARIMA===============#
+# Stationarity
+ggAcf(CORN$etf_asset_error, lag.max = 650)
+ggPacf(CORN$etf_asset_error, lag.max = 650)
+
+Box.test(CORN$etf_asset_error)
+tseries::kpss.test(CORN$etf_asset_error) 
+tseries::adf.test(CORN$etf_asset_error)
+
+#=====AR(1)==============#
+arima100 <- arima(CORN$etf_asset_error, order = c(1,0,0))
+summary(arima100)
+checkresiduals(arima100)
+Box.test(arima100$residuals^2, type = 'Ljung-Box')
+
+arima200 <- arima(CORN$etf_asset_error, order = c(2,0,0))
+summary(arima200)
+checkresiduals(arima200)
+Box.test(arima200$residuals^2, type = 'Ljung-Box')
+
+arima300 <- arima(CORN$etf_asset_error, order = c(3,0,0))
+summary(arima300)
+checkresiduals(arima300)
+Box.test(arima300$residuals^2, lag = 1, type = 'Ljung-Box')
+
+arima400 <- arima(CORN$etf_asset_error, order = c(4,0,0))
+summary(arima400)
+checkresiduals(arima400)
+Box.test(arima400$residuals^2, type = 'Ljung-Box')
+
+arima500 <- arima(CORN$etf_asset_error, order = c(4,0,0))
+summary(arima500)
+checkresiduals(arima500)
+Box.test(arima500$residuals^2, type = 'Ljung-Box')
+
+
+arima101 <- arima(CORN$etf_asset_error, order = c(1,0,1))
+summary(arima101)
+checkresiduals(arima101)
+Box.test(arima101$residuals^2, type = 'Ljung-Box')
+
 
 #===Testing for ARCH/GARCH Effects
 # Engles LM ARCH Test
 FinTS::ArchTest(CORN$etf_asset_error)
 # Find strong evidence of ARCH effects
+FinTS::ArchTest(CORN$etf_asset_error^2)
+
+#=====Testing different ARCH specifications
 
 arch.order = 1:5
 arch.names = paste('arch', arch.order, sep = '')
@@ -123,15 +167,17 @@ arch3.spec = ugarchspec (variance.model = list(garchOrder = c(3,0)),
 arch3.fit = ugarchfit(spec = arch3.spec, data = CORN$etf_asset_error,
                         solver.control = list(trace = 1))
 
+arch3.fit
+
 #=========Residual Disgnostics========#
 # ARCH(3)
 par(mfrow = c(2,2))
-plot(CORN$Date, fit@fit[['residuals']], type= 'line') + ylab('Residuals') +
+plot(CORN$Date, arch3.fit@fit[['residuals']], type= 'line') + ylab('Residuals') +
   xlab('Date') + theme_bw() 
-hist(fit@fit[['residuals']]) + theme_bw() 
-acf(fit@fit[['residuals']]) 
-qqnorm(fit@fit[['residuals']]) 
-qqline(fit@fit[['residuals']])
+hist(arch3.fit@fit[['residuals']]) + theme_bw() 
+acf(arch3.fit@fit[['residuals']]) 
+qqnorm(arch3.fit@fit[['residuals']]) 
+qqline(arch3.fit@fit[['residuals']])
 
 #GARCH(1,1)
 par(mfrow = c(2,2))
@@ -143,23 +189,7 @@ qqnorm(garch11.fit@fit[['residuals']])
 qqline(garch11.fit@fit[['residuals']])
 
 
-
-
-
-
-
-
-
-
-#==========================
-
-
-
-
-
-
-
-#===========External Regressors==================#
+#========External Regressors==================#
 
 ext_reg <- CORN.xts # creates a new xts object to hold external regressors
 
@@ -182,8 +212,9 @@ ext_reg$Volume <- NULL
 
 
 # Define the model
-model_spec <- ugarchspec(variance.model = list(model = 'gjrGARCH', garchOrder = c(3,1), 
-                                               external.regressors = ext_reg))
+model_spec <- ugarchspec(variance.model = list(garchOrder = c(3,0), 
+                                               external.regressors = ext_reg),
+                        mean.model = list(armaOrder = c(0,0)))
 setbounds(model_spec) <- list(vxreg1 = c(-100,100), vxreg2 = c(-100,100), vxreg3 = c(-100,100), vxreg4 = c(-100,100),
                               vxreg5 = c(-100,100), vxreg6 = c(-100,100), vxreg7 = c(-100,100), vxreg8 = c(-100,100),
                               vxreg9 = c(-100,100), vxreg10 = c(-100,100), vxreg11 = c(-100,100), vxreg12 = c(-100,100), 
