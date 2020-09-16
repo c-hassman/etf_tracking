@@ -212,7 +212,7 @@ ext_reg$Volume <- NULL
 
 
 # Define the model
-model_spec <- ugarchspec(variance.model = list(garchOrder = c(3,0), 
+full_model_spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), 
                                                external.regressors = ext_reg),
                         mean.model = list(armaOrder = c(0,0)))
 setbounds(model_spec) <- list(vxreg1 = c(-100,100), vxreg2 = c(-100,100), vxreg3 = c(-100,100), vxreg4 = c(-100,100),
@@ -226,9 +226,8 @@ setbounds(model_spec) <- list(vxreg1 = c(-100,100), vxreg2 = c(-100,100), vxreg3
 
 
 # Fit the model and display results
-fit <- ugarchfit(data = CORN.xts$etf_asset_error, spec = model_spec)
-
-fit
+full_fit <- ugarchfit(data = CORN.xts$etf_asset_error, spec = model_spec)
+full_fit
 
 #---------------------Descriptive Statistics of Asset Error------#
 
