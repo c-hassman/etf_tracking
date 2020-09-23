@@ -66,10 +66,7 @@ max(SOYB$etf_asset_error, na.rm = TRUE)
 min(SOYB$etf_asset_error, na.rm = TRUE)
 
 #---------------------Exploratory Plots--------------------------------------#
-#------ETF, Asset Basket Error
-qplot(SOYB$Date, (SOYB$etf_asset_error * 100), geom = 'line') + theme_bw() +
-  ggtitle("Daily Return Error: SOYB ETF - Asset Basket") + ylab("Error (%)") +
-  xlab("Date")
+
 #-----ETF and Asset Basket 
 etfcolor <- "black"
 assetcolor <- "darkgrey"
@@ -81,11 +78,23 @@ ggplot(data = SOYB, aes(x = Date)) +
     name = 'ETF Price ($)',
     sec.axis = sec_axis(~.*coeff, name = "Asset Basket Price (cents per bushel)")
   ) + theme_bw() + ggtitle("SOYB ETF and Asset Basket Price") + xlab("Date") 
-#----Premium/Discount to NAV
-qplot(SOYB$Date, ((SOYB$SOYB_MID - SOYB$SOYB_NAV)/SOYB$SOYB_NAV * 100), geom = 'line') +
-  theme_bw() + ylab("Premium/Discount (%)") + xlab("Date") + ggtitle("SOYB Premium/Discount to NAV")
+
+#-----ETF Returns
+qplot(SOYB$Date, SOYB$per_ETF_return, geom = 'line') + ggtitle("SOYB: ETF % Return") + 
+  ylab('Log Percent Return') + xlab('Date') + theme_bw()
+
+#-----Asset Returns
+qplot(SOYB$Date, SOYB$per_asset_return, geom = 'line') + ggtitle("SOYB: Asset Basket % Return") + 
+  ylab('Log Percent Return') + xlab('Date') + theme_bw()
 
 
+#------ETF, Asset Basket Error
+qplot(SOYB$Date, SOYB$etf_asset_error, geom = 'line') + theme_bw() +
+  ggtitle("SOYB: Tracking Error") + ylab("Error (%)") +
+  xlab("Date")
+qplot(SOYB$Date, SOYB$etf_asset_error^2, geom = 'line') + theme_bw() +
+  ggtitle("SOYB: Squared Tracking Error") + ylab("Error (%)") +
+  xlab("Date")
 #==========Box Jenkins Procedure===================#
 #- Investigate Stationarity of Tracking Error
 ggAcf(SOYB$etf_asset_error, lag.max = 650)
@@ -121,6 +130,8 @@ arima101 <- arima(SOYB$etf_asset_error, order = c(1,0,1))
 summary(arima101)
 checkresiduals(arima101)
 Box.test(arima101$residuals^2, lag = 1, type = 'Ljung-Box')
+
+
 
 #==== GARCH Models
 

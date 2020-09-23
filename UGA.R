@@ -81,16 +81,16 @@ min(UGA$etf_asset_error, na.rm = TRUE)
 #-----ETF and Asset Basket Prices
 etfcolor <- "black"
 assetcolor <- "darkgrey"
-coeff <- UGA$asset_basket[1] / UGA$UGA_MID[1]
+coeff <- UGA$Futures[1] / UGA$UGA_MID[1]
 ggplot(data = UGA, aes(x = Date)) +
   geom_line(aes(y = UGA_MID), color = etfcolor) +
-  geom_line(aes(y = asset_basket / coeff), color = assetcolor) +
+  geom_line(aes(y = Futures / coeff), color = assetcolor) +
   scale_y_continuous(
     name = "ETF Price ($)", 
     sec.axis = sec_axis(~.*coeff, name = "Asset Basket Price (cents per bushel)")
   ) + theme_bw() + ggtitle("UGA ETF and Asset Basket Price") + xlab("Date") 
 
-#-----ETF Returns
+ #-----ETF Returns
 qplot(UGA$Date, UGA$per_ETF_return, geom = 'line') + ggtitle("UGA: ETF % Return") + 
   ylab('Log Percent Return') + xlab('Date') + theme_bw()
 

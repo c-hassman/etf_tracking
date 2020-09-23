@@ -56,7 +56,7 @@ WEAT <- na.omit(WEAT)
 # and the roll days we just deleted. Not sure why I have to create another "Date"
 # column but that is the only way I could get it to work
 WEAT <- WEAT %>% 
-  mutate(Date = as.Date(WEAT)) %>% 
+  mutate(Date = as.Date(DATE)) %>% 
   complete(Date = seq.Date(min(DATE), max(DATE), by="day"))
 
 # Now to forward fill the date
@@ -130,6 +130,7 @@ arima300 <- arima(WEAT$etf_asset_error, order = c(3,0,0))
 summary(arima300)
 checkresiduals(arima300)
 Box.test(arima300$residuals^2, lag = 1, type = 'Ljung-Box')
+
 
 #==== GARCH Models
 
