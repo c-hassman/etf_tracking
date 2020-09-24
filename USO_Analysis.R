@@ -28,7 +28,7 @@ USO$per_asset_return <- log(USO$Futures/lag(USO$Futures)) * 100
 USO$per_ETF_return <- log(USO$USO_MID /lag(USO$USO_MID)) * 100
 USO$per_NAV_return <- log(USO$USO_NAV/lag(USO$USO_NAV)) * 100
 USO$etf_asset_error <- USO$per_ETF_return - USO$per_asset_return
-USO
+
 
 #-----------------------Add ETF Volume Data-----------------------#
 
@@ -40,6 +40,7 @@ volume <- data.frame(as.Date(volume$DATE), volume$USO.Volume)
 colnames(volume) <- c("DATE", "Volume")
 #Merge the Volume data with the other data
 USO <- merge(USO, volume, by = "DATE")
+USO$volume_return <-log(USO$Volume/lag(USO$Volume)) * 100
 
 #----------------------More Date Manipulation----------------#
 #Remove rows with NA
@@ -58,60 +59,56 @@ USO <- subset(USO, select = -Date)
 # Create an XTS object
 USO.xts <- as.xts(USO, order.by = USO$DATE)
 
-#=====================================================#
-# plot the ETF_ASSET_ERRORS
-qplot(USO$DATE, USO$etf_asset_error, geom = 'line') + ggtitle('USO: ETF % Return = Asset % Return') + 
-  ylab('Error') + xlab('Date') + theme_bw()
-qplot(USO$DATE, USO$etf_asset_error^2, geom = 'line') + ggtitle('USO: (ETF % Return = Asset % Return)^2') + 
-  ylab('Error') + xlab('Date') + theme_bw()
 
-# Simple Beta Model
-beta_ols = lm(per_asset_return ~ per_ETF_return, data = USO)
-summary(beta_ols)
-lmtest::bptest(beta_ols)
-qplot(USO$DATE, beta_ols$residuals, geom = 'line') + ggtitle('USO: Residuals from Beta Model') +
-  ylab('Residuals') + xlab('Date') + theme_bw()
-qplot(USO$DATE, beta_ols$residuals^2, geom = 'line') + ggtitle('USO: Squared Residuals from Beta Model') +
-  ylab('Squared Residuals') + xlab('Date') + theme_bw()
 
-# Simple OLS Model
-simple_ols = lm(abs(etf_asset_error) ~ abs(per_asset_return), data = USO)
-summary(simple_ols)
-lmtest::bptest(simple_ols)
-qplot(USO$DATE, simple_ols$residuals, geom = 'line') + ggtitle('USO: Residuals from Simple OLS Model') + 
-  ylab('Residuals') + xlab('Date') + theme_bw()
-qplot(USO$DATE, simple_ols$residuals^2, geom = 'line') + ggtitle('USO: Squared Residuals from Simple OLS Model') + 
-  ylab('Squared Residuals') + xlab('Date') + theme_bw()
 
-# Dummy Model
-model <- lm(abs(USO$etf_asset_error) ~ abs(USO$per_ETF_return) + USO$`CL Day Before Roll` +
-              USO$`CL Day After Roll` + USO$`CL Feb` + USO$`CL Mar` + USO$`CL April` + USO$`CL May` +
-              USO$`CL June` + USO$`CL July` + USO$`CL Aug` + USO$`CL Sept` + USO$`CL Oct` +
-              USO$`CL Nov` + USO$`CL Dec` + USO$`CL 2014` + USO$`CL 2015` + USO$`CL 2016` +
-              USO$`CL 2017` + USO$`CL 2018` + USO$`CL 2019` + USO$`CL 2020` + USO$`CL STEO` +
-              USO$`CL Drilling Prod` + USO$`CL Petro Supply/Prod` + USO$`CL Annual Energy Outlook`)
-summary(model)  
-lmtest::bptest(model)
-qplot(USO$DATE, model$residuals, geom = 'line') + ggtitle('USO: Residuals from Dummy Model') +
-  ylab('Residuals') + xlab('Date') + theme_bw()
-qplot(USO$DATE, model$residuals^2, geom = 'line') + ggtitle('USO: Squared Residuals from Dummy Model') +
-  ylab('Squared Residuals') + xlab('Date') + theme_bw()
 
-#----------GARCH----------#
-# Define the model
-model_spec <- ugarchspec(variance.model = list(model = 'apARCH', garchOrder = c(1,1)))
+#--- GARCH Model
+base_model_spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                              mean.model = list(armaOrder = c(2,1)))
+base_fit <- ugarchfit(data = USO.xts$etf_asset_error, spec = base_model_spec)
+base_fit
+
+
+
+
+# Full model
+ext_reg <- USO.xts # creates a new xts object to hold external regressors
+
+# The code below removes all the columns which are not external regressors. 
+# There must be a better way to do this
+ext_reg$Date <- NULL
+ext_reg$USO_MID <- NULL
+ext_reg$Futures <- NULL
+ext_reg$USO_NAV <- NULL
+ext_reg$ROLL <- NULL
+ext_reg$`CL Jan` <- NULL
+ext_reg$`C 2012` <- NULL
+ext_reg$`C 2020` <- NULL
+ext_reg$etf_asset_error<- NULL
+ext_reg$per_NAV_return <- NULL
+ext_reg$per_ETF_return <- NULL
+ext_reg$Volume <- NULL
+
+
+
+full_model_spec <- ugarchspec(variance.model = list(garchOrder = c(1,1),
+                                                    external.regressors = ext_reg),
+                              mean.model = list(armaOrder = c(2,1)))
+
+setbounds(full_model_spec) <- list(vxreg1 = c(-100,100), vxreg2 = c(-100,100), vxreg3 = c(-100,100), vxreg4 = c(-100,100),
+                                   vxreg5 = c(-100,100), vxreg6 = c(-100,100), vxreg7 = c(-100,100), vxreg8 = c(-100,100),
+                                   vxreg9 = c(-100,100), vxreg10 = c(-100,100), vxreg11 = c(-100,100), vxreg12 = c(-100,100), 
+                                   vxreg13 = c(-100,100), vxreg14 = c(-100,100), vxreg15 = c(-100,100), vxreg16 = c(-100,100),
+                                   vxreg17 = c(-100,100), vxreg18 = c(-100,100), vxreg19 = c(-100,100), vxreg20 = c(-100,100), 
+                                   vxreg21 = c(-100,100), vxreg22 = c(-100,100), vxreg23 = c(-100,100), vxreg24 = c(-100,100), 
+                                   vxreg25 = c(-100,100), vxreg26 = c(-100,100), vxreg28 = c(-100,100), vxreg29 = c(-100,100),
+                                   vxreg30 = c(-100,100))
+
 
 # Fit the model and display results
-fit <- ugarchfit(data = USO.xts$etf_asset_error, spec = model_spec)
-fit
-
-
-qplot(USO$DATE, fit@fit[['residuals']], geom = 'line') + ggtitle('USO: apARCH(1,1) Model Residuals') + ylab('Residuals') +
-  xlab('Date') + theme_bw()
-qplot(USO$DATE, fit@fit[['residuals']]^2, geom = 'line') + ggtitle('USO: apARCH(1,1) Model Residuals^2') + ylab('Squared Residuals') + 
-  xlab('Date') + theme_bw()
-qplot(USO$DATE, fit@fit[['sigma']], geom = 'line') + ggtitle('USO: apARCH(1,1) Conditional Variance') + ylab('h') + xlab('Date') +
-  theme_bw()
+full_fit <- ugarchfit(data = USO.xts$etf_asset_error, spec = full_model_spec)
+full_fit
 
 
 

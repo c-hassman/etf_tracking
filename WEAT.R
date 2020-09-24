@@ -136,7 +136,7 @@ Box.test(arima300$residuals^2, lag = 1, type = 'Ljung-Box')
 
 # Base
 base_model_spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
-                              mean.model = list(armaOrder = c(3,0)))
+                              mean.model = list(armaOrder = c(4,3)))
 base_fit <- ugarchfit(data = WEAT.xts$etf_asset_error, spec = base_model_spec)
 base_fit
 
@@ -150,7 +150,7 @@ ext_reg$WEAT_MID <- NULL
 ext_reg$`F1(.35)` <- NULL
 ext_reg$`F2(.3)` <- NULL
 ext_reg$`F3(.35)` <- NULL
-ext_reg$CORN_NAV <- NULL
+ext_reg$WEAT_NAV <- NULL
 ext_reg$ROLL <- NULL
 ext_reg$`W Jan` <- NULL
 ext_reg$`W 2012` <- NULL
@@ -164,7 +164,7 @@ ext_reg$Volume <- NULL
 # Define the model
 full_model_spec <- ugarchspec(variance.model = list(garchOrder = c(1,1),
                                                     external.regressors = ext_reg),
-                              mean.model = list(armaOrder = c(3,0)))
+                              mean.model = list(armaOrder = c(4,3)))
 
 setbounds(full_model_spec) <- list(vxreg1 = c(-100,100), vxreg2 = c(-100,100), vxreg3 = c(-100,100), vxreg4 = c(-100,100),
                                    vxreg5 = c(-100,100), vxreg6 = c(-100,100), vxreg7 = c(-100,100), vxreg8 = c(-100,100),
