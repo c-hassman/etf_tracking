@@ -125,11 +125,35 @@ UGA$per_NAV_return <- log(UGA$UGA_NAV/lag(UGA$UGA_NAV)) * 100
 UGA$etf_asset_error <- UGA$per_ETF_return - UGA$per_asset_return
 
 #  Volume data ------------------------------------------------------------------------
+volume <- read.csv("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Volume.csv")
+# subset the dataframe to only the relevant columes
+corn.volume <- data.frame(as.Date(volume$DATE), volume$CORN.Volume)
+#rename the columns
+colnames(corn.volume) <- c("DATE", "Volume")
+#Merge the Volume data with the other data
+CORN <- merge(CORN, corn.volume, by = "DATE")
+# calculate percent change in volume
+CORN$volume_return <-log(CORN$Volume/lag(CORN$Volume)) * 100
 
+soyb.volume <- data.frame(as.Date(volume$DATE), volume$SOYB.Volume)
+colnames(soyb.volume) <- c("DATE", "Volume")
+SOYB <- merge(SOYB, soyb.volume, by = "DATE")
+SOYB$volume_return <-log(SOYB$Volume/lag(SOYB$Volume)) * 100
 
+weat.volume <- data.frame(as.Date(volume$DATE), volume$WEAT.Volume)
+colnames(weat.volume) <- c("DATE", "Volume")
+WEAT <- merge(WEAT, weat.volume, by = "DATE")
+WEAT$volume_return <-log(WEAT$Volume/lag(WEAT$Volume)) * 100
 
+uso.volume <- data.frame(as.Date(volume$DATE), volume$USO.Volume)
+colnames(uso.volume) <- c("DATE", "Volume")
+USO <- merge(USO, uso.volume, by = "DATE")
+USO$volume_return <-log(USO$Volume/lag(USO$Volume)) * 100
 
-
+uga.volume <- data.frame(as.Date(volume$DATE), volume$UGA.Volume)
+colnames(uga.volume) <- c("DATE", "Volume")
+UGA <- merge(UGA, uga.volume, by = "DATE")
+UGA$volume_return <-log(UGA$Volume/lag(UGA$Volume)) * 100
 
 
 #--- More data cleaning
@@ -265,6 +289,7 @@ uga.base_fit <- ugarchfit(data = UGA.xts$etf_asset_error, spec = uga.base_model_
 uga.base_fit
 
 
+
 # Base GARCH Conditional Variance
 par(mfrow = c(3, 2), mai = c(0.25, 0.5, 0.2, 0.05))
 plot(CORN$Date, corn.base_fit@fit[['sigma']], type = "l", main = "CORN",
@@ -348,3 +373,70 @@ ggAcf(corn.s)
 ggAcf(weat.s)
 ggAcf(uso.s)
 ggAcf(uga.s)
+
+
+
+# GARCH with External Variables
+## As mentioned in the header, it is necessary to load all these in seperately, 
+## For each commodity, I have two external variable xts objects, one for the 
+## mean, and one for the variance equation
+
+CORN.mean.ext_reg <- CORN.xts[, c('per_asset_return', 'volume_return')]
+
+
+# Now I want to add two dummy variables: one if $ asset is positive and one if negative
+CORN.mean.ext_reg$pos_ind <-  0
+CORN.mean.ext_reg$neg_ind <- 0
+
+for(i in 1:nrow(CORN.mean.ext_reg)){
+  if(CORN.mean.ext_reg$per_asset_return[i] > 0){
+    CORN.mean.ext_reg$pos_ind[i] <- 1
+  }
+  else if(CORN.mean.ext_reg[i] < 0){
+    CORN.mean.ext_reg$neg_ind[i] <- 1
+  }
+}
+
+CORN.mean.ext_reg <- as.matrix(CORN.mean.ext_reg)
+
+# The variance equation has so many variables, I find it best to simply copy all 
+# and then remove the unnecessary ones
+CORN.var.ext_reg <- CORN.xts
+
+CORN.var.ext_reg$CORN_MID  <- NULL
+CORN.var.ext_reg$`F1(.35)`  <- NULL
+CORN.var.ext_reg$`F2(.3)`  <- NULL
+CORN.var.ext_reg$`F3(.35)`  <- NULL
+CORN.var.ext_reg$CORN_NAV  <- NULL
+CORN.var.ext_reg$ROLL  <- NULL
+CORN.var.ext_reg$`C Jan`  <- NULL
+CORN.var.ext_reg$`C 2012`  <- NULL
+CORN.var.ext_reg$etf_asset_error  <- NULL
+CORN.var.ext_reg$per_NAV_return  <- NULL
+CORN.var.ext_reg$asset_basket  <- NULL
+CORN.var.ext_reg$per_asset_return  <- NULL
+CORN.var.ext_reg$Volume  <- NULL
+CORN.var.ext_reg$per_ETF_return <- NULL
+CORN.var.ext_reg$volume_return <- NULL
+
+corn.full_model_spec <- ugarchspec(mean.model = list(armaOrder = c(3,0),include.mean = TRUE,
+                                                    external.regressors = CORN.mean.ext_reg), 
+                              variance.model = list(garchOrder = c(1,1),
+                                                    external.regressors = CORN.var.ext_reg))
+
+
+setbounds(corn.full_model_spec) <- list(vxreg1 = c(-100,100), vxreg2 = c(-100,100), vxreg3 = c(-100,100), vxreg4 = c(-100,100),
+                                   vxreg5 = c(-100,100), vxreg6 = c(-100,100), vxreg7 = c(-100,100), vxreg8 = c(-100,100),
+                                   vxreg9 = c(-100,100), vxreg10 = c(-100,100), vxreg11 = c(-100,100), vxreg12 = c(-100,100), 
+                                   vxreg13 = c(-100,100), vxreg14 = c(-100,100), vxreg15 = c(-100,100), vxreg16 = c(-100,100),
+                                   vxreg17 = c(-100,100), vxreg18 = c(-100,100), vxreg19 = c(-100,100), vxreg20 = c(-100,100), 
+                                   vxreg21 = c(-100,100), vxreg22 = c(-100,100), vxreg23 = c(-100,100), vxreg24 = c(-100,100), 
+                                   vxreg25 = c(-100,100), vxreg26 = c(-100,100), vxreg28 = c(-100,100), vxreg29 = c(-100,100),
+                                   vxreg30 = c(-100,100), mxreg1 = c(-100,100), mxreg2 = c(-100,100), mxreg3 = c(-100,100),
+                                   mxreg4 = c(-100,100))
+
+corn.full_fit <- ugarchfit(data = CORN.xts$etf_asset_error, spec = corn.full_model_spec)
+corn.full_fit
+
+
+
