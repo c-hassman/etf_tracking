@@ -439,4 +439,77 @@ corn.full_fit <- ugarchfit(data = CORN.xts$etf_asset_error, spec = corn.full_mod
 corn.full_fit
 
 
+# SOYB
+#SOYB.mean.ext_reg <- SOYB.xts[, c('per_asset_return')]
+#SOYB.mean.ext_reg <- as.matrix(SOYB.mean.ext_reg)
+# 
+# SOYB.var.ext_reg <- SOYB.xts[, c('S WASDE', 'S WASDE + CP', 'S Grain Stocks', 'S Prospective Plantings', 'S Acreage Report', 
+#                                  'S Cattle on Feed', 'S Hogs & Pigs', 'S Day Before Roll', 'S Day After Roll', 'per_asset_return',
+#                                  'volume_return')]
+# 
+# soyb.full_model_spec <- ugarchspec(mean.model = list(armaOrder = c(4,3),include.mean = TRUE), 
+#                                    variance.model = list(garchOrder = c(1,1),
+#                                                          external.regressors = SOYB.var.ext_reg))
+# 
+# 
+# setbounds(soyb.full_model_spec) <- list(vxreg1 = c(-100,100), vxreg2 = c(-100,100), vxreg3 = c(-100,100), vxreg4 = c(-100,100),
+#                                         vxreg5 = c(-100,100), vxreg6 = c(-100,100), vxreg7 = c(-100,100), vxreg8 = c(-100,100),
+#                                         vxreg9 = c(-100,100), vxreg10 = c(-100,100), mxreg1 = c(-100,100), mxreg2 = c(-100,100), mxreg3 = c(-100,100),
+#                                         mxreg4 = c(-100,100))
+# 
+# soyb.full_fit <- ugarchfit(data = SOYB.xts$etf_asset_error, spec = soyb.full_model_spec)
+# soyb.full_fit
+
+
+# WEAT
+# , 'volume_return'
+WEAT.mean.ext_reg <- WEAT.xts[, c('per_asset_return')]
+WEAT.mean.ext_reg$pos_ind <-  0
+WEAT.mean.ext_reg$neg_ind <- 0
+
+for(i in 1:nrow(WEAT.mean.ext_reg)){
+  if(WEAT.mean.ext_reg$per_asset_return[i] > 0){
+    WEAT.mean.ext_reg$pos_ind[i] <- 1
+  }
+  else if(WEAT.mean.ext_reg[i] < 0){
+    WEAT.mean.ext_reg$neg_ind[i] <- 1
+  }
+}
+WEAT.mean.ext_reg <- as.matrix(WEAT.mean.ext_reg)
+
+WEAT.var.ext_reg <- WEAT.xts
+WEAT.var.ext_reg$WEAT_MID  <- NULL
+WEAT.var.ext_reg$`F1(.35)`  <- NULL
+WEAT.var.ext_reg$`F2(.3)`  <- NULL
+WEAT.var.ext_reg$`F3(.35)`  <- NULL
+WEAT.var.ext_reg$WEAT_NAV  <- NULL
+WEAT.var.ext_reg$ROLL  <- NULL
+WEAT.var.ext_reg$`W Jan`  <- NULL
+WEAT.var.ext_reg$`W 2012`  <- NULL
+WEAT.var.ext_reg$etf_asset_error  <- NULL
+WEAT.var.ext_reg$per_NAV_return  <- NULL
+WEAT.var.ext_reg$asset_basket  <- NULL
+WEAT.var.ext_reg$per_asset_return  <- NULL
+WEAT.var.ext_reg$Volume  <- NULL
+WEAT.var.ext_reg$per_ETF_return <- NULL
+#WEAT.var.ext_reg$volume_return <- NULL
+
+weat.full_model_spec <- ugarchspec(mean.model = list(armaOrder = c(4,3),include.mean = TRUE,
+                                                     external.regressors = WEAT.mean.ext_reg), 
+                                   variance.model = list(garchOrder = c(1,1),
+                                                         external.regressors = WEAT.var.ext_reg))
+
+
+setbounds(weat.full_model_spec) <- list(vxreg1 = c(-100,100), vxreg2 = c(-100,100), vxreg3 = c(-100,100), vxreg4 = c(-100,100),
+                                        vxreg5 = c(-100,100), vxreg6 = c(-100,100), vxreg7 = c(-100,100), vxreg8 = c(-100,100),
+                                        vxreg9 = c(-100,100), vxreg10 = c(-100,100), vxreg11 = c(-100,100), vxreg12 = c(-100,100), 
+                                        vxreg13 = c(-100,100), vxreg14 = c(-100,100), vxreg15 = c(-100,100), vxreg16 = c(-100,100),
+                                        vxreg17 = c(-100,100), vxreg18 = c(-100,100), vxreg19 = c(-100,100), vxreg20 = c(-100,100), 
+                                        vxreg21 = c(-100,100), vxreg22 = c(-100,100), vxreg23 = c(-100,100), vxreg24 = c(-100,100), 
+                                        vxreg25 = c(-100,100), vxreg26 = c(-100,100), vxreg28 = c(-100,100), vxreg29 = c(-100,100),
+                                        vxreg30 = c(-100,100), mxreg1 = c(-100,100), mxreg2 = c(-100,100), mxreg3 = c(-100,100),
+                                        mxreg4 = c(-100,100))
+
+weat.full_fit <- ugarchfit(data = WEAT.xts$etf_asset_error, spec = weat.full_model_spec)
+weat.full_fit
 
