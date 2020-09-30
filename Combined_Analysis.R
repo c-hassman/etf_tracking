@@ -495,7 +495,7 @@ WEAT.var.ext_reg$per_ETF_return <- NULL
 #WEAT.var.ext_reg$volume_return <- NULL
 
 weat.full_model_spec <- ugarchspec(mean.model = list(armaOrder = c(4,3),include.mean = TRUE,
-                                                     external.regressors = WEAT.mean.ext_reg), 
+                                                     external.regressors = WEAT.mean.ext_reg, archm = TRUE), 
                                    variance.model = list(garchOrder = c(1,1),
                                                          external.regressors = WEAT.var.ext_reg))
 
@@ -512,4 +512,34 @@ setbounds(weat.full_model_spec) <- list(vxreg1 = c(-100,100), vxreg2 = c(-100,10
 
 weat.full_fit <- ugarchfit(data = WEAT.xts$etf_asset_error, spec = weat.full_model_spec)
 weat.full_fit
+
+
+# USO
+
+
+
+# UGA
+
+
+
+full_model_spec <- ugarchspec(variance.model = list(garchOrder = c(1,1),
+                                                    external.regressors = ext_reg),
+                              mean.model = list(armaOrder = c(3,1)))
+
+setbounds(full_model_spec) <- list(vxreg1 = c(-100,100), vxreg2 = c(-100,100), vxreg3 = c(-100,100), vxreg4 = c(-100,100),
+                                   vxreg5 = c(-100,100), vxreg6 = c(-100,100), vxreg7 = c(-100,100), vxreg8 = c(-100,100),
+                                   vxreg9 = c(-100,100), vxreg10 = c(-100,100), vxreg11 = c(-100,100), vxreg12 = c(-100,100), 
+                                   vxreg13 = c(-100,100), vxreg14 = c(-100,100), vxreg15 = c(-100,100), vxreg16 = c(-100,100),
+                                   vxreg17 = c(-100,100), vxreg18 = c(-100,100), vxreg19 = c(-100,100), vxreg20 = c(-100,100), 
+                                   vxreg21 = c(-100,100), vxreg22 = c(-100,100), vxreg23 = c(-100,100), vxreg24 = c(-100,100), 
+                                   vxreg25 = c(-100,100), vxreg26 = c(-100,100), vxreg28 = c(-100,100), vxreg29 = c(-100,100),
+                                   vxreg30 = c(-100,100))
+
+
+# Fit the model and display results
+full_fit <- ugarchfit(data = UGA.xts$etf_asset_error, spec = full_model_spec)
+full_fit
+
+
+
 
