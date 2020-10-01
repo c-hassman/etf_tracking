@@ -89,7 +89,7 @@ ext_reg$etf_asset_error<- NULL
 ext_reg$per_NAV_return <- NULL
 ext_reg$per_ETF_return <- NULL
 ext_reg$Volume <- NULL
-
+ext_reg$DATE <- NULL
 
 
 full_model_spec <- ugarchspec(variance.model = list(garchOrder = c(1,1),
