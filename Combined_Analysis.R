@@ -21,7 +21,7 @@ library(tseries)
 
 
 #-----------------Import Data from Excel and order------------#
-CORN <- read_excel("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Data_Update.xlsx", 
+CORN <- read_excel("G:/My Drive/3_Research/Neff Paper/Working_Folder/Data_Update.xlsx", 
                    sheet = "CORN", col_types = c("numeric", 
                                                  "numeric", "numeric", "numeric", 
                                                  "numeric", "numeric", "numeric", 
@@ -35,7 +35,7 @@ CORN <- read_excel("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Data_
                                                  "numeric", "numeric", "numeric", 
                                                  "numeric", "numeric", "numeric", 
                                                  "numeric", "numeric", "numeric"))
-SOYB <- read_excel("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Data_Update.xlsx", 
+SOYB <- read_excel("G:/My Drive/3_Research/Neff Paper/Working_Folder/Data_Update.xlsx", 
                    sheet = "SOYB", col_types = c("numeric", 
                                                  "numeric", "numeric", "numeric", 
                                                  "numeric", "numeric", "numeric", 
@@ -49,7 +49,7 @@ SOYB <- read_excel("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Data_
                                                  "numeric", "numeric", "numeric", 
                                                  "numeric", "numeric", "numeric", 
                                                  "numeric", "numeric", "numeric"))
-WEAT <- read_excel("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Data_Update.xlsx", 
+WEAT <- read_excel("G:/My Drive/3_Research/Neff Paper/Working_Folder/Data_Update.xlsx", 
                    sheet = "WEAT", col_types = c("numeric", 
                                                  "numeric", "numeric", "numeric", 
                                                  "numeric", "numeric", "numeric", 
@@ -63,7 +63,7 @@ WEAT <- read_excel("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Data_
                                                  "numeric", "numeric", "numeric", 
                                                  "numeric", "numeric", "numeric", 
                                                  "numeric", "numeric", "numeric"))
-USO <- read_excel("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Data_Update.xlsx", 
+USO <- read_excel("G:/My Drive/3_Research/Neff Paper/Working_Folder/Data_Update.xlsx", 
                   sheet = "USO", col_types = c("numeric", 
                                                "numeric", "numeric", "numeric", 
                                                "numeric", "numeric", "numeric", 
@@ -76,7 +76,7 @@ USO <- read_excel("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Data_U
                                                "numeric", "numeric", "numeric", 
                                                "numeric", "numeric", "numeric"))
 
-UGA <- read_excel("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Data_Update.xlsx", 
+UGA <- read_excel("G:/My Drive/3_Research/Neff Paper/Working_Folder/Data_Update.xlsx", 
                   sheet = "UGA", col_types = c("numeric", 
                                                "numeric", "numeric", "numeric", 
                                                "numeric", "numeric", "numeric", 
@@ -130,7 +130,7 @@ UGA$per_ETF_return <- log(UGA$UGA_MID/lag(UGA$UGA_MID)) * 100
 #UGA$etf_asset_error <- UGA$per_ETF_return - UGA$per_asset_return
 
 #  Volume data ------------------------------------------------------------------------
-volume <- read.csv("G:/My Drive/3_Massa Research/Neff Paper/Working_Folder/Volume.csv")
+volume <- read.csv("G:/My Drive/3_Research/Neff Paper/Working_Folder/Volume.csv")
 # subset the dataframe to only the relevant columes
 corn.volume <- data.frame(as.Date(volume$DATE), volume$CORN.Volume)
 #rename the columns
@@ -299,17 +299,17 @@ plot(UGA$Date, UGA$etf_asset_error^2, type = "l", main = "UGA",
      xlab = "", ylab = "")
 
 #-------- FIT ARIMA Model to Tracking Error
-arima100 <- arima(UGA$etf_asset_error, order = c(2,0,2))
+arima100 <- arima(CORN$etf_asset_error, order = c(2,0,1))
 summary(arima100)
 checkresiduals(arima100)
 Box.test(arima100$residuals^2, type = 'Ljung-Box')
 #auto.arima(WEAT$etf_asset_error)
 
-
+corn_error = as.matrix(CORN$etf_asset_error)
 # Base Garch Models
 corn.base_model_spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
-                              mean.model = list(armaOrder = c(1,2)))
-corn.base_fit <- ugarchfit(data = CORN.xts$etf_asset_error, spec = corn.base_model_spec)
+                              mean.model = list(armaOrder = c(2,1)))
+corn.base_fit <- ugarchfit(data = CORN$etf_asset_error, spec = corn.base_model_spec, solver = 'hybrid')
 corn.base_fit
 
 robust_coef <- as.data.frame(corn.base_fit@fit[['robust.matcoef']])
@@ -339,7 +339,7 @@ uga.base_fit
 
 # Base GARCH Conditional Variance
 par(mfrow = c(3, 2), mai = c(0.25, 0.5, 0.2, 0.05))
-plot(CORN$Date, corn.base_fit@fit[['sigma']], type = "l", main = "CORN",
+plot(corn.base_fit@fit[['sigma']], type = "l", main = "CORN",
      xlab = "", ylab = "")
 plot(SOYB$Date, soyb.base_fit@fit[['sigma']], type = "l", main = "SOYB",
      xlab = "", ylab = "")
@@ -354,7 +354,7 @@ plot(UGA$Date, uga.base_fit@fit[['sigma']], type = "l", main = "UGA",
 # Base GARCH Residuals
 par(mfrow = c(3, 2), mai = c(0.25, 0.5, 0.2, 0.05))
 par(mfrow = c(3, 2), mai = c(0.25, 0.5, 0.2, 0.05))
-plot(CORN$Date, corn.base_fit@fit[['residuals']], type = "l", main = "CORN",
+plot(corn.base_fit@fit[['residuals']], type = "l", main = "CORN",
      xlab = "", ylab = "")
 plot(SOYB$Date, soyb.base_fit@fit[['residuals']], type = "l", main = "SOYB",
      xlab = "", ylab = "")
@@ -368,7 +368,7 @@ plot(UGA$Date, uga.base_fit@fit[['residuals']], type = "l", main = "UGA",
 
 # Base GARCH Squared Residuals 
 par(mfrow = c(3, 2), mai = c(0.25, 0.5, 0.2, 0.05))
-plot(CORN$Date, corn.base_fit@fit[['residuals']]^2, type = "l", main = "CORN",
+plot(corn.base_fit@fit[['residuals']]^2, type = "l", main = "CORN",
      xlab = "", ylab = "")
 plot(SOYB$Date, soyb.base_fit@fit[['residuals']]^2, type = "l", main = "SOYB",
      xlab = "", ylab = "")
@@ -389,7 +389,7 @@ uga.s <- uga.base_fit@fit[['residuals']] / uga.base_fit@fit[['sigma']]
 
 # Base Standardized GARCH Residuals
 par(mfrow = c(3, 2), mai = c(0.25, 0.5, 0.2, 0.05))
-plot(CORN$Date, corn.s, type = "l", main = "CORN",
+plot(corn.s, type = "l", main = "CORN",
      xlab = "", ylab = "")
 plot(SOYB$Date, soyb.s, type = "l", main = "SOYB",
      xlab = "", ylab = "")
@@ -402,7 +402,7 @@ plot(UGA$Date, uga.s, type = "l", main = "UGA",
 
 # Base Standardized GARCH Squared Residuals 
 par(mfrow = c(3, 2), mai = c(0.25, 0.5, 0.2, 0.05))
-plot(CORN$Date, corn.s^2, type = "l", main = "CORN",
+plot(corn.s^2, type = "l", main = "CORN",
      xlab = "", ylab = "")
 plot(SOYB$Date, soyb.s^2, type = "l", main = "SOYB",
      xlab = "", ylab = "")
@@ -427,13 +427,6 @@ ggAcf(uga.s)
 ## As mentioned in the header, it is necessary to load all these in seperately, 
 ## For each commodity, I have two external variable xts objects, one for the 
 ## mean, and one for the variance equation
-
-ols <- lm( CORN$per_ETF_return ~ CORN$per_asset_return)
-summary(ols)
-plot(CORN$Date, ols$residuals, type = 'l')
-
-tsdisplay(ols$residuals)
-ggAcf(ols$residuals)
 
 CORN.mean.ext_reg <- CORN.xts[, c('per_asset_return', 'volume_return')]
 
