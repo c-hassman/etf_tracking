@@ -1,0 +1,18 @@
+
+
+There is reason to believe that tracking error as defined in formula 3, may display similar characteristics, even after fitting an appropriate time series model to the data. To formally test this, we begin by fitting a ARIMA model to the tracking errors. ARIMA models combine both an autoregressive (AR) process and a moving average (MA) process. The autoregression portion uses previous values of the variable to forecast. An AR model of order $p$ can be written as
+
+% \begin{align}
+%     y_{t} = c + %%%% ARIMA??? @Shamar
+% \end{align}
+
+To fit the model , we utilize the Box Jenkins Procedure \citep{boxjenkins}. The results of our stationarity test are shown in (Table). Next we plot the ACF and PACF plots and find significant evidence of dependence for multiple lags. For each ETF, we begin with the most parsimonious model (AR1), check the significance of coefficients and run diagnostics on both the squared and non-squared residuals. We run a portmanteau test on the residuals to test for dependence with multiple lags. Equation \ref{eqn:portman} illustrates the general form. 
+
+\begin{equation}\label{eqn:portman}
+    \hat{\epsilon}^2_{t} = \beta_{0} + \beta_{i}\sum_{i = 1}^{M}\hat{\epsilon}^2_{t-i}
+\end{equation}
+
+Where $M$ is the maximum lags as specified by the researcher.
+
+We then expand the complexity of the model until the models passes our residual diagnostics. The results and specifications of these models are reported in Table \ref{arima_spec}.
+For each of the ETF's tracking error, the best fitting ARIMA model displays dependence among the squared residuals, which provides evidence of volatility clustering, motivating a GARCH type model. The benefits of the GARCH model is that it allows for both autoregressive and moving average components of heteroskedastic variance \citep{garch}.
