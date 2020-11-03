@@ -12,6 +12,9 @@ library(lubridate)
 library(writexl)
 library(tseries)
 
+library(parallel)
+
+setwd("G:/My Drive/3_Research/Neff Paper/Working_Folder")
 
 #---- Notes
 # I know what you are asking: why am I still importing all this data seperately? The answer has to do with the external variables. 
@@ -208,6 +211,11 @@ adf.test(uga.ols$residuals)
 
 #--- ETF Returns
 
+summary(corn.ols)
+
+plot(CORN$per_asset_return, CORN$per_ETF_return)
+line(x = CORN$per_asset_return, y =CORN$per_ETF_return)
+
 par(mfrow = c(3, 2), mai = c(0.25, 0.5, 0.2, 0.05))
 plot(CORN$DATE, CORN$per_ETF_return, type = "l", main = "CORN",
      xlab = "", ylab = "", ylim = c(-10, 10))
@@ -219,6 +227,7 @@ plot(USO$DATE, USO$per_ETF_return, type = "l", main = "USO",
      xlab = "", ylab = "", ylim = c(-10, 10))
 plot(UGA$DATE, UGA$per_ETF_return, type = "l", main = "UGA",
      xlab = "", ylab = "", ylim = c(-10, 10))
+dev.off()
 
 #-- Asset Returns
 par(mfrow = c(3, 2), mai = c(0.25, 0.5, 0.2, 0.05))
@@ -293,8 +302,7 @@ uga.base_fit <- ugarchfit(data = UGA$etf_asset_error, spec = uga.base_model_spec
                           solver = 'hybrid')
 uga.base_fit
 
-
-
+?ugarchfit
 #--------------------------------------------------------------------------------
 # Base GARCH Conditional Variance
 par(mfrow = c(3, 2), mai = c(0.25, 0.5, 0.2, 0.05))
@@ -310,17 +318,17 @@ plot(UGA$DATE, uga.base_fit@fit[['sigma']], type = "l", main = "UGA",
      xlab = "", ylab = "")
 
 # Squared Tracking error vs Base GARCH Conditional Variance
-par(mfrow = c(3, 2), mai = c(0.25, 0.5, 0.2, 0.05))
-plot(CORN$etf_asset_error^2, corn.base_fit@fit[['sigma']]^2, main = "CORN",
-     xlab = "", ylab = "")
-plot(SOYB$etf_asset_error^2, soyb.base_fit@fit[['sigma']]^2, main = "SOYB",
-     xlab = "", ylab = "")
-plot(WEAT$etf_asset_error^2, weat.base_fit@fit[['sigma']]^2 , main = "WEAT",
-     xlab = "", ylab = "Sigma")
-plot(USO$etf_asset_error^2, uso.base_fit@fit[['sigma']]^2, main = "USO", 
-     xlab = "", ylab = "")
-plot(UGA$etf_asset_error^2, uga.base_fit@fit[['sigma']]^2, main = "UGA",
-     xlab = "", ylab = "")
+# par(mfrow = c(3, 2), mai = c(0.25, 0.5, 0.2, 0.05))
+# plot(CORN$etf_asset_error^2, corn.base_fit@fit[['sigma']]^2, main = "CORN",
+#      xlab = "", ylab = "")
+# plot(SOYB$etf_asset_error^2, soyb.base_fit@fit[['sigma']]^2, main = "SOYB",
+#      xlab = "", ylab = "")
+# plot(WEAT$etf_asset_error^2, weat.base_fit@fit[['sigma']]^2 , main = "WEAT",
+#      xlab = "", ylab = "Sigma")
+# plot(USO$etf_asset_error^2, uso.base_fit@fit[['sigma']]^2, main = "USO", 
+#      xlab = "", ylab = "")
+# plot(UGA$etf_asset_error^2, uga.base_fit@fit[['sigma']]^2, main = "UGA",
+#      xlab = "", ylab = "")
 
 
 # Base GARCH Residuals
@@ -330,7 +338,7 @@ plot(CORN$DATE, corn.base_fit@fit[['residuals']], type = "l", main = "CORN",
 plot(SOYB$DATE, soyb.base_fit@fit[['residuals']], type = "l", main = "SOYB",
      xlab = "", ylab = "")
 plot(WEAT$DATE, weat.base_fit@fit[['residuals']], type = "l", main = "WEAT",
-     xlab = "", ylab = "Percent Error Squared")
+     xlab = "", ylab = "Model Residuals")
 plot(USO$DATE, uso.base_fit@fit[['residuals']], type = "l", main = "USO", 
      xlab = "", ylab = "")
 plot(UGA$DATE, uga.base_fit@fit[['residuals']], type = "l", main = "UGA",
@@ -344,7 +352,7 @@ plot(CORN$DATE, corn.base_fit@fit[['residuals']]^2, type = "l", main = "CORN",
 plot(SOYB$DATE, soyb.base_fit@fit[['residuals']]^2, type = "l", main = "SOYB",
      xlab = "", ylab = "")
 plot(WEAT$DATE, weat.base_fit@fit[['residuals']]^2, type = "l", main = "WEAT",
-     xlab = "", ylab = "Percent Error Squared")
+     xlab = "", ylab = "Model Residuals Squared")
 plot(USO$DATE, uso.base_fit@fit[['residuals']]^2, type = "l", main = "USO", 
      xlab = "", ylab = "")
 plot(UGA$DATE, uga.base_fit@fit[['residuals']]^2, type = "l", main = "UGA",
@@ -392,20 +400,13 @@ plot(UGA$DATE, uga.s^2, type = "l", main = "UGA",
 ## mean, and one for the variance equation
 
 
-#, 'volume_return'
 CORN.mean.ext_reg <- CORN.xts[, c('per_asset_return')]
-
-
 CORN.mean.ext_reg$pos_ind <-  0
-#CORN.mean.ext_reg$neg_ind <- 0
 
 for(i in 1:nrow(CORN.mean.ext_reg)){
   if(CORN.mean.ext_reg$per_asset_return[i] > 0){
     CORN.mean.ext_reg$pos_ind[i] <- 1
   }
-#  else if(CORN.mean.ext_reg$per_asset_return[i] < 0){
-#    CORN.mean.ext_reg$neg_ind[i] <- 1
-#  }
 }
 
 CORN.mean.ext_reg$backward <- 0
@@ -415,52 +416,28 @@ for(i in 1:nrow(CORN.mean.ext_reg)){
     CORN.mean.ext_reg$backward[i] <- 1
   }
 }
-  
-  
 CORN.mean.ext_reg <- as.matrix(CORN.mean.ext_reg)
 
-# The variance equation has so many variables, I find it best to simply copy all 
-# and then remove the unnecessary ones
+
 CORN.var.ext_reg <- CORN.xts
+# Include months and years:  c(1,2,3,4,5,6,9,21,37,38,39,40,42)
+# No months and years: 
+# c(1,2,3,4,5,6,9,10,11,12,13,14,15,16,17,
+#   18,19,20,21,22,23,24,25,26,27,28,29,37,38,39,40,42)
 
-CORN.var.ext_reg$CORN_MID  <- NULL
-CORN.var.ext_reg$F1..35.  <- NULL
-CORN.var.ext_reg$F2..3.  <- NULL
-CORN.var.ext_reg$F3..35.  <- NULL
-CORN.var.ext_reg$CORN_NAV  <- NULL
-CORN.var.ext_reg$ROLL  <- NULL
-CORN.var.ext_reg$C.Jan  <- NULL
-CORN.var.ext_reg$C.2012  <- NULL
-CORN.var.ext_reg$etf_asset_error  <- NULL
-CORN.var.ext_reg$per_NAV_return  <- NULL
-CORN.var.ext_reg$asset_basket  <- NULL
-CORN.var.ext_reg$per_asset_return  <- NULL
-CORN.var.ext_reg$Volume  <- NULL
-CORN.var.ext_reg$per_ETF_return <- NULL
-#CORN.var.ext_reg$volume_return <- NULL
+colnames(CORN.xts)
+cnames_corn <- colnames(CORN.xts)[-c(1,2,3,4,5,6,9,21,37,38,39,40,42)]
+CORN.var.ext_reg <- CORN.xts[,cnames_corn]
 
-#mean.model = list(armaOrder = c(0,0)) #include.mean = TRUE,
-#external.regressors = CORN.mean.ext_reg, archm = TRUE),
-
-
-corn.full_model_spec <- ugarchspec(mean.model = list(armaOrder = c(2,1), include.mean = TRUE,
+corn.full_model_spec <- ugarchspec(mean.model = list(armaOrder = c(0,0), include.mean = TRUE,
                                                      external.regressors = CORN.mean.ext_reg),
                                    variance.model = list(garchOrder = c(1,1),
                                                     external.regressors = CORN.var.ext_reg))
 
-
-setbounds(corn.full_model_spec) <- list(vxreg1 = c(-100,100), vxreg2 = c(-100,100), vxreg3 = c(-100,100), vxreg4 = c(-100,100),
-                                   vxreg5 = c(-100,100), vxreg6 = c(-100,100), vxreg7 = c(-100,100), vxreg8 = c(-100,100),
-                                   vxreg9 = c(-100,100), vxreg10 = c(-100,100), vxreg11 = c(-100,100), vxreg12 = c(-100,100), 
-                                   vxreg13 = c(-100,100), vxreg14 = c(-100,100), vxreg15 = c(-100,100), vxreg16 = c(-100,100),
-                                   vxreg17 = c(-100,100), vxreg18 = c(-100,100), vxreg19 = c(-100,100), vxreg20 = c(-100,100), 
-                                   vxreg21 = c(-100,100), vxreg22 = c(-100,100), vxreg23 = c(-100,100), vxreg24 = c(-100,100), 
-                                   vxreg25 = c(-100,100), vxreg26 = c(-100,100), vxreg28 = c(-100,100), vxreg29 = c(-100,100),
-                                   vxreg30 = c(-100,100), mxreg1 = c(-100,100), mxreg2 = c(-100,100), mxreg3 = c(-100,100),
-                                   mxreg4 = c(-100,100))
-
-corn.full_fit <- ugarchfit(data = CORN.xts$etf_asset_error, spec = corn.full_model_spec, 
-                           solver = 'hybrid')
+#cl = makePSOCKcluster(2)
+corn.full_fit <- ugarchfit(data = CORN$etf_asset_error, spec = corn.full_model_spec, 
+                           solver = 'hybrid', cluster = cl)
+#stopCluster(cl)
 corn.full_fit
 
 robust_coef <- as.data.frame(corn.full_fit@fit[['robust.matcoef']])
@@ -488,15 +465,8 @@ SOYB.var.ext_reg <- SOYB.xts[, c('S WASDE', 'S WASDE + CP', 'S Grain Stocks', 'S
 SOYB.var.ext_reg <- as.matrix(SOYB.var.ext_reg)
 
 # mean.model = list(armaOrder = c(0,0),include.mean = TRUE),
-soyb.full_model_spec <- ugarchspec(
-                                   variance.model = list(garchOrder = c(1,1),
+soyb.full_model_spec <- ugarchspec(variance.model = list(garchOrder = c(1,1),
                                                          external.regressors = SOYB.var.ext_reg))
-
-
-setbounds(soyb.full_model_spec) <- list(vxreg1 = c(-100,100), vxreg2 = c(-100,100), vxreg3 = c(-100,100), vxreg4 = c(-100,100),
-                                        vxreg5 = c(-100,100), vxreg6 = c(-100,100), vxreg7 = c(-100,100), vxreg8 = c(-100,100),
-                                        vxreg9 = c(-100,100), vxreg10 = c(-100,100), mxreg1 = c(-100,100), mxreg2 = c(-100,100), mxreg3 = c(-100,100),
-                                        mxreg4 = c(-100,100))
 
 soyb.full_fit <- ugarchfit(data = SOYB$etf_asset_error, spec = soyb.full_model_spec, 
                            solver = 'hybrid')
@@ -505,18 +475,13 @@ soyb.full_fit
 #-----------------------------------------------
 # WEAT
 
-# , 'volume_return'
 WEAT.mean.ext_reg <- WEAT.xts[, c('per_asset_return')]
 WEAT.mean.ext_reg$pos_ind <-  0
-# WEAT.mean.ext_reg$neg_ind <- 0
-# 
+
  for(i in 1:nrow(WEAT.mean.ext_reg)){
    if(WEAT.mean.ext_reg$per_asset_return[i] > 0){
      WEAT.mean.ext_reg$pos_ind[i] <- 1
    }
-#   else if(WEAT.mean.ext_reg$per_asset_return[i] < 0){
-#     WEAT.mean.ext_reg$neg_ind[i] <- 1
-#   }
 }
 
 WEAT.mean.ext_reg$backward <- 0
@@ -527,45 +492,23 @@ for(i in 1:nrow(WEAT.mean.ext_reg)){
   }
 }
 
-
-
 WEAT.mean.ext_reg <- as.matrix(WEAT.mean.ext_reg)
 
-WEAT.var.ext_reg <- WEAT.xts
-WEAT.var.ext_reg$WEAT_MID  <- NULL
-WEAT.var.ext_reg$`F1(.35)`  <- NULL
-WEAT.var.ext_reg$`F2(.3)`  <- NULL
-WEAT.var.ext_reg$`F3(.35)`  <- NULL
-WEAT.var.ext_reg$WEAT_NAV  <- NULL
-WEAT.var.ext_reg$ROLL  <- NULL
-WEAT.var.ext_reg$`W Jan`  <- NULL
-WEAT.var.ext_reg$`W 2012`  <- NULL
-WEAT.var.ext_reg$etf_asset_error  <- NULL
-WEAT.var.ext_reg$per_NAV_return  <- NULL
-WEAT.var.ext_reg$asset_basket  <- NULL
-WEAT.var.ext_reg$per_asset_return  <- NULL
-WEAT.var.ext_reg$Volume  <- NULL
-WEAT.var.ext_reg$per_ETF_return <- NULL
-#WEAT.var.ext_reg$volume_return <- NULL
+# With Months and Years: -c(1,2,3,4,5,6,9,21,37,38,40)
+# Without Months and Years:
+# 
+# c(1,2,3,4,5,6,9,10,11,12,13,14,15,16,17,18,19,20,21,
+#   22,23,24,25,26,27,28,29,37,38,40)
 
+colnames(WEAT.xts)
+cnames_weat <- colnames(WEAT.xts)[-c(1,2,3,4,5,6,9,21,37,38,39,40)]
+cnames_weat
 
-# ,include.mean = TRUE, external.regressors = WEAT.mean.ext_reg, archm = TRUE
+WEAT.var.ext_reg <- WEAT.xts[,cnames_weat]
 
-
-weat.full_model_spec <- ugarchspec(mean.model = list(armaOrder = c(1,5),external.regressors = WEAT.mean.ext_reg), 
+weat.full_model_spec <- ugarchspec(mean.model = list(armaOrder = c(0,0),external.regressors = WEAT.mean.ext_reg, include.mean = TRUE), 
                                    variance.model = list(garchOrder = c(1,1),
                                                          external.regressors = WEAT.var.ext_reg))
-
-
-setbounds(weat.full_model_spec) <- list(vxreg1 = c(-100,100), vxreg2 = c(-100,100), vxreg3 = c(-100,100), vxreg4 = c(-100,100),
-                                        vxreg5 = c(-100,100), vxreg6 = c(-100,100), vxreg7 = c(-100,100), vxreg8 = c(-100,100),
-                                        vxreg9 = c(-100,100), vxreg10 = c(-100,100), vxreg11 = c(-100,100), vxreg12 = c(-100,100), 
-                                        vxreg13 = c(-100,100), vxreg14 = c(-100,100), vxreg15 = c(-100,100), vxreg16 = c(-100,100),
-                                        vxreg17 = c(-100,100), vxreg18 = c(-100,100), vxreg19 = c(-100,100), vxreg20 = c(-100,100), 
-                                        vxreg21 = c(-100,100), vxreg22 = c(-100,100), vxreg23 = c(-100,100), vxreg24 = c(-100,100), 
-                                        vxreg25 = c(-100,100), vxreg26 = c(-100,100), vxreg28 = c(-100,100), vxreg29 = c(-100,100),
-                                        vxreg30 = c(-100,100), mxreg1 = c(-100,100), mxreg2 = c(-100,100), mxreg3 = c(-100,100),
-                                        mxreg4 = c(-100,100))
 
 weat.full_fit <- ugarchfit(data = WEAT$etf_asset_error, spec = weat.full_model_spec, 
                            solver = 'hybrid')
@@ -577,70 +520,28 @@ write_xlsx(robust_coef, "data.xlsx")
 #---------------------------------------------------------
 # USO
 
-
 USO.mean.ext_reg <- USO.xts[,c('per_asset_return')]
 
 USO.mean.ext_reg$pos_ind <- 0
-#USO.mean.ext_reg$neg_ind <- 0
-
- for(i in 1:nrow(USO.mean.ext_reg)){
-   if(USO.mean.ext_reg$per_asset_return[i] > 0){
-     USO.mean.ext_reg$pos_ind[i] <- 1
-   }
-#   else if(USO.mean.ext_reg$per_asset_return[i] < 0){
-#     USO.mean.ext_reg$neg_ind[i] <- 1
-#   }
- }
+for(i in 1:nrow(USO.mean.ext_reg)){
+  if(USO.mean.ext_reg$per_asset_return[i] > 0){
+    USO.mean.ext_reg$pos_ind[i] <- 1
+  }
+}
 
 USO.mean.ext_reg <- as.matrix(USO.mean.ext_reg)
 
-USO.var.ext_reg <- USO.xts
-USO.var.ext_reg$Date <- NULL
-USO.var.ext_reg$USO_MID <- NULL
-USO.var.ext_reg$Futures <- NULL
-USO.var.ext_reg$USO_NAV <- NULL
-USO.var.ext_reg$ROLL <- NULL
-USO.var.ext_reg$`CL Jan` <- NULL
-USO.var.ext_reg$`CL Feb` <- NULL
-USO.var.ext_reg$`CL Mar` <- NULL
-USO.var.ext_reg$`CL April` <- NULL
-USO.var.ext_reg$`CL May` <- NULL
-USO.var.ext_reg$`CL June` <- NULL
-USO.var.ext_reg$`CL July` <- NULL
-USO.var.ext_reg$`CL Aug` <- NULL
-USO.var.ext_reg$`CL Sept` <- NULL
-USO.var.ext_reg$`CL Oct` <- NULL
-USO.var.ext_reg$`CL Nov` <- NULL
-USO.var.ext_reg$`CL Dec` <- NULL
-USO.var.ext_reg$`CL 2013` <- NULL
-USO.var.ext_reg$`CL 2014` <- NULL
-USO.var.ext_reg$`CL 2020` <- NULL
-USO.var.ext_reg$etf_asset_error<- NULL
-USO.var.ext_reg$per_NAV_return <- NULL
-USO.var.ext_reg$per_ETF_return <- NULL
-USO.var.ext_reg$Volume <- NULL
-USO.var.ext_reg$DATE <- NULL
-#USO.var.ext_reg$volume_return <- NULL
-USO.var.ext_reg$per_asset_return <- NULL
+#With Months and Years: c(1,2,3,4,5,8,20,32,33,34)
+#Without Months and Years: 
 
-#, archm = TRUE
-# ,external.regressors = USO.mean.ext_reg
-# include.mean = TRUE,
-uso.full_model_spec <- ugarchspec(mean.model = list(armaOrder = c(2,1),external.regressors = USO.mean.ext_reg ),
+cnames_uso <- colnames(USO.xts)[-c(1,2,3,4,5,8,20,32,33,34)]
+cnames_uso
+
+USO.var.ext_reg <- USO.xts[,cnames_uso]
+
+uso.full_model_spec <- ugarchspec(mean.model = list(armaOrder = c(0,0),external.regressors = USO.mean.ext_reg ),
                                   variance.model = list(garchOrder = c(1,1), 
                                                         external.regressors = USO.var.ext_reg))
-
-
-setbounds(uso.full_model_spec) <- list(vxreg1 = c(-100,100), vxreg2 = c(-100,100), vxreg3 = c(-100,100), vxreg4 = c(-100,100),
-                                        vxreg5 = c(-100,100), vxreg6 = c(-100,100), vxreg7 = c(-100,100), vxreg8 = c(-100,100),
-                                        vxreg9 = c(-100,100), vxreg10 = c(-100,100), vxreg11 = c(-100,100), vxreg12 = c(-100,100), 
-                                        vxreg13 = c(-100,100), vxreg14 = c(-100,100), vxreg15 = c(-100,100), vxreg16 = c(-100,100),
-                                        vxreg17 = c(-100,100), vxreg18 = c(-100,100), vxreg19 = c(-100,100), vxreg20 = c(-100,100), 
-                                        vxreg21 = c(-100,100), vxreg22 = c(-100,100), vxreg23 = c(-100,100), vxreg24 = c(-100,100), 
-                                        vxreg25 = c(-100,100), vxreg26 = c(-100,100), vxreg28 = c(-100,100), vxreg29 = c(-100,100),
-                                        vxreg30 = c(-100,100), mxreg1 = c(-100,100), mxreg2 = c(-100,100), mxreg3 = c(-100,100),
-                                        mxreg4 = c(-100,100))
-
 
 uso.full_fit <- ugarchfit(data = USO$etf_asset_error, spec = uso.full_model_spec, 
                           solver = 'hybrid')
@@ -652,55 +553,29 @@ write_xlsx(robust_coef, "data.xlsx")
 #--------------------------------------------------------
 # UGA
 
-#, 'volume_return'
 UGA.mean.ext_reg <- UGA.xts[,c('per_asset_return')]
 
- UGA.mean.ext_reg$pos_ind <- 0
-# UGA.mean.ext_reg$neg_ind <- 0
-# 
- for(i in 1:nrow(UGA.mean.ext_reg)){
-   if(UGA.mean.ext_reg$per_asset_return[i] > 0){
-     UGA.mean.ext_reg$pos_ind[i] <- 1
-   }
-#   else if(UGA.mean.ext_reg$per_asset_return[i] < 0){
-#     UGA.mean.ext_reg$neg_ind[i] <- 1
-#   }
+UGA.mean.ext_reg$pos_ind <- 0
+ 
+for(i in 1:nrow(UGA.mean.ext_reg)){
+ if(UGA.mean.ext_reg$per_asset_return[i] > 0){
+   UGA.mean.ext_reg$pos_ind[i] <- 1
+ }
 }
-
 UGA.mean.ext_reg <- as.matrix(UGA.mean.ext_reg)
 
-UGA.var.ext_reg <- UGA.xts
-UGA.var.ext_reg$Date <- NULL
-UGA.var.ext_reg$UGA_MID <- NULL
-UGA.var.ext_reg$Futures <- NULL
-UGA.var.ext_reg$UGA_NAV <- NULL
-UGA.var.ext_reg$ROLL <- NULL
-UGA.var.ext_reg$`RB Jan` <- NULL
-UGA.var.ext_reg$`RB 2012` <- NULL
-UGA.var.ext_reg$etf_asset_error<- NULL
-UGA.var.ext_reg$per_NAV_return <- NULL
-UGA.var.ext_reg$per_ETF_return <- NULL
-UGA.var.ext_reg$Volume <- NULL
-UGA.var.ext_reg$DATE <- NULL
-#UGA.var.ext_reg$volume_return <- NULL
-UGA.var.ext_reg$per_asset_return <- NULL
+cnames_uga <- colnames(UGA.xts)[-c(1,2,3,4,7,19,32,33,34)]
+cnames_uga
 
-#UGA.var.ext_reg <- as.matrix(UGA.var.ext_reg)
+UGA.var.ext_reg <- UGA.xts[,cnames_uga]
+
+UGA.var.ext_reg <- as.matrix(UGA.var.ext_reg)
 
 
 # , archm = TRUE , include.mean = TRUE
-uga.full_model_spec <- ugarchspec(mean.model = list(armaOrder = c(1,2), external.regressors = UGA.mean.ext_reg),
+uga.full_model_spec <- ugarchspec(mean.model = list(armaOrder = c(0,0), external.regressors = UGA.mean.ext_reg),
                                   variance.model = list(garchOrder = c(1,1), external.regressors = UGA.var.ext_reg))
 
-setbounds(uga.full_model_spec) <- list(vxreg1 = c(-100,100), vxreg2 = c(-100,100), vxreg3 = c(-100,100), vxreg4 = c(-100,100),
-                                       vxreg5 = c(-100,100), vxreg6 = c(-100,100), vxreg7 = c(-100,100), vxreg8 = c(-100,100),
-                                       vxreg9 = c(-100,100), vxreg10 = c(-100,100), vxreg11 = c(-100,100), vxreg12 = c(-100,100),
-                                       vxreg13 = c(-100,100), vxreg14 = c(-100,100), vxreg15 = c(-100,100), vxreg16 = c(-100,100),
-                                       vxreg17 = c(-100,100), vxreg18 = c(-100,100), vxreg19 = c(-100,100), vxreg20 = c(-100,100),
-                                       vxreg21 = c(-100,100), vxreg22 = c(-100,100), vxreg23 = c(-100,100), vxreg24 = c(-100,100),
-                                       vxreg25 = c(-100,100), vxreg26 = c(-100,100), vxreg28 = c(-100,100), vxreg29 = c(-100,100),
-                                       vxreg30 = c(-100,100), mxreg1 = c(-100,100), mxreg2 = c(-100,100), mxreg3 = c(-100,100),
-                                       mxreg4 = c(-100,100))
 
 
 # Fit the model and display results
@@ -712,6 +587,17 @@ uga.full_fit
 robust_coef <- as.data.frame(uga.full_fit@fit[['robust.matcoef']])
 write_xlsx(robust_coef, "data.xlsx")
 
+
+#----------------------------------------------------------
+# Playing Around with Multivariate GARCH
+
+# first put all the tracking errors in one dataframe
+
+#dat <- cbind(USO$etf_asset_error, UGA$etf_asset_error)
+
+#install.packages('rmgarch')
+
+library(rmgarch)
 
 
 
