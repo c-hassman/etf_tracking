@@ -269,16 +269,19 @@ plot(USO$DATE, USO$etf_asset_error^2, type = "l", main = "USO",
 plot(UGA$DATE, UGA$etf_asset_error^2, type = "l", main = "UGA",
      xlab = "", ylab = "")
 
+ggtsdisplay(SOYB$etf_asset_error)
+dev.off()
+
 #--------------------------------------------------------------------------------------------------------
 # Base Garch Models
 
-corn.base_model_spec <- ugarchspec(variance.model = list( garchOrder = c(1,1)),
+'corn.base_model_spec <- ugarchspec(variance.model = list( garchOrder = c(1,1)),
                               mean.model = list(armaOrder = c(2,1)))
 corn.base_fit <- ugarchfit(data = CORN$etf_asset_error, spec = corn.base_model_spec, solver = 'hybrid')
-corn.base_fit
+corn.base_fit'
 
 soyb.base_model_spec <- ugarchspec(variance.model = list( garchOrder = c(1,1)),
-                              mean.model = list(armaOrder = c(0,0), archm = TRUE))
+                              mean.model = list(armaOrder = c(0,1)))
 soyb.base_fit <- ugarchfit(data = SOYB$etf_asset_error, spec = soyb.base_model_spec,
                            solver = 'hybrid')
 soyb.base_fit
@@ -447,6 +450,15 @@ write_xlsx(robust_coef, "data.xlsx")
 #------------------------------------------
 
 #SOYB
+
+summary(data.frame(SOYB$per_asset_return, SOYB$per_ETF_return, SOYB$asset_basket, SOYB$SOYB_MID, SOYB$etf_asset_error))
+
+summary(CORN$etf_asset_error)
+dev.off()
+hist(CORN$etf_asset_error, breaks = seq(-1.5,2,.1))
+var(CORN$etf_asset_error)
+var(SOYB$etf_asset_error)
+
 SOYB.mean.ext_reg <- SOYB.xts[, c('per_asset_return')]
 
 SOYB.mean.ext_reg$backward <- 0
@@ -465,11 +477,11 @@ SOYB.var.ext_reg <- SOYB.xts[, c('S WASDE', 'S WASDE + CP', 'S Grain Stocks', 'S
 SOYB.var.ext_reg <- as.matrix(SOYB.var.ext_reg)
 
 # mean.model = list(armaOrder = c(0,0),include.mean = TRUE),
-soyb.full_model_spec <- ugarchspec(variance.model = list(garchOrder = c(1,1),
-                                                         external.regressors = SOYB.var.ext_reg))
+# 
+soyb.full_model_spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)))#, external.regressors = as.matrix(SOYB.var.ext_reg[,(10:11)])))                                                
 
-soyb.full_fit <- ugarchfit(data = SOYB$etf_asset_error, spec = soyb.full_model_spec, 
-                           solver = 'hybrid')
+soyb.full_fit <- ugarchfit(data = SOYB$etf_asset_error, spec = soyb.full_model_spec, solver = 'hybrid')
+                           
 soyb.full_fit
 
 #-----------------------------------------------
