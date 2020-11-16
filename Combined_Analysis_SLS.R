@@ -1,20 +1,23 @@
 rm(list = ls())
 
 library(readxl)
-library(tidyverse)
-library(ggthemes)
+# library(tidyverse)
+# library(ggthemes)# library(writexl)# library(parallel)
 library(xts)
-library(tidyr)
+# library(tidyr)
 library(zoo)
-library(rugarch)
-library(fpp2)
+# library(rugarch)
+# library(fpp2)
 library(lubridate)
-library(writexl)
 library(tseries)
 
-library(parallel)
+## Set working direction to this R file's location
+library(rstudioapi)
+setwd(dirname(getActiveDocumentContext()$path)) 
+getwd()
 
-setwd("G:/My Drive/3_Research/Neff Paper/Working_Folder")
+## Needed to move 1 level back from wd (to get to Data)
+(path <- dirname(getwd())) 
 
 #---- Notes
 # I know what you are asking: why am I still importing all this data seperately? The answer has to do with the external variables. 
@@ -24,154 +27,148 @@ setwd("G:/My Drive/3_Research/Neff Paper/Working_Folder")
 
 
 #-----------------Import Data from Excel and order------------#
-CORN <- read_excel("G:/My Drive/3_Research/Neff Paper/Working_Folder/Data_Update.xlsx", 
-                   sheet = "CORN", col_types = c("numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric"))
-SOYB <- read_excel("G:/My Drive/3_Research/Neff Paper/Working_Folder/Data_Update.xlsx", 
-                   sheet = "SOYB", col_types = c("numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric"))
-WEAT <- read_excel("G:/My Drive/3_Research/Neff Paper/Working_Folder/Data_Update.xlsx", 
-                   sheet = "WEAT", col_types = c("numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric"))
-USO <- read_excel("G:/My Drive/3_Research/Neff Paper/Working_Folder/Data_Update.xlsx", 
-                  sheet = "USO", col_types = c("numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric"))
-
-UGA <- read_excel("G:/My Drive/3_Research/Neff Paper/Working_Folder/Data_Update.xlsx", 
-                  sheet = "UGA", col_types = c("numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric"))
+mydat <- paste0(path,"/Data/Data_Update.xlsx")
+CORN <- read_xlsx(mydat, sheet = "CORN")
+SOYB <- read_excel(mydat, sheet = "SOYB")
+WEAT <- read_excel(mydat, sheet = "WEAT")
+USO <- read_excel(mydat, sheet = "USO")
+UGA <- read_excel(mydat, sheet = "UGA")
 
 #------------------Date Manipulation and Cleaning---------------#
-CORN$DATE <- as.Date(CORN$DATE, origin = "1899-12-30")  #set date 
-CORN <- CORN[order(CORN$DATE),] #order by date
-CORN$asset_basket <- (CORN$`F1(.35)` * 0.35) + (CORN$`F2(.3)` * 0.3) + (CORN$`F3(.35)` * 0.35) #reconstruct asset basket
-CORN$per_asset_return <- log(CORN$asset_basket/lag(CORN$asset_basket))* 100 # calculate percent asset basket return
-CORN$per_ETF_return <- log(CORN$CORN_MID/lag(CORN$CORN_MID)) * 100#calculate percent ETF return
+ws <- rbind(0.35,0.3,0.35)
+fs <- c("F1(.35)","F2(.3)","F3(.35)")
 
+### CORN
 
-SOYB$DATE <- as.Date(SOYB$DATE, origin = "1899-12-30") # Set date
-SOYB <- SOYB[order(SOYB$DATE),] #order by date
-SOYB$asset_basket <- (SOYB$`F1(.35)` * 0.35) + (SOYB$`F2(.3)` * 0.30) + (SOYB$`F3(.35)` * 0.35)
+# Reverse the chronological order
+CORN <- CORN[nrow(CORN):1,]  
+# Create the Asset Basket
+CORN$asset_basket <- as.matrix(CORN[,fs]) %*% ws
+
+# Calculate Asset and ETF Return                     
+CORN$per_asset_return <- log(CORN$asset_basket/lag(CORN$asset_basket))* 100
+CORN$per_ETF_return <- log(CORN$CORN_MID/lag(CORN$CORN_MID)) * 100
+
+### SOYBEANS
+
+# Reverse chronological order
+SOYB <- SOYB[nrow(SOYB):1,]  
+# Create the Asset Basket
+SOYB$asset_basket <- as.matrix(SOYB[,fs]) %*% ws
+
+# Calculate Asset and ETF Return  
 SOYB$per_asset_return <- log(SOYB$asset_basket / lag(SOYB$asset_basket)) * 100
 SOYB$per_ETF_return <- log(SOYB$SOYB_MID / lag(SOYB$SOYB_MID)) * 100
 
+### WHEAT
 
-WEAT$DATE <- as.Date(WEAT$DATE, origin = "1899-12-30")  #set date 
-WEAT <- WEAT[order(WEAT$DATE),] #order by date
-WEAT$asset_basket <- (WEAT$`F1(.35)` * 0.35) + (WEAT$`F2(.3)` * 0.3) + (WEAT$`F3(.35)` * 0.35) #reconstruct asset basket
-WEAT$per_asset_return <- log(WEAT$asset_basket/lag(WEAT$asset_basket))* 100 # calculate percent asset basket return
-WEAT$per_ETF_return <- log(WEAT$WEAT_MID/lag(WEAT$WEAT_MID)) * 100#calculate percent ETF return
+# Reverse chronological order
+WEAT <- WEAT[nrow(WEAT):1,]  
 
+# Create the Asset Basket
+WEAT$asset_basket <- as.matrix(WEAT[,fs]) %*% ws
 
-USO$DATE <- as.Date(USO$DATE, origin = "1899-12-30") 
-USO <- USO[order(USO$DATE),]
+# Calculate Asset and ETF Return  
+WEAT$per_asset_return <- log(WEAT$asset_basket/lag(WEAT$asset_basket))*100 
+WEAT$per_ETF_return <- log(WEAT$WEAT_MID/lag(WEAT$WEAT_MID))*100
+
+### USO
+
+# Reverse chronological order
+USO <- USO[nrow(USO):1,]  
+
+# Calculate Asset and ETF Return  
 USO$per_asset_return <- log(USO$Futures/lag(USO$Futures)) * 100
 USO$per_ETF_return <- log(USO$USO_MID /lag(USO$USO_MID)) * 100
 
+### UGA
 
-UGA$DATE <- as.Date(UGA$DATE, origin = "1899-12-30") 
-UGA <- UGA[order(UGA$DATE),]
+# Reverse chronological order
+UGA <- UGA[nrow(UGA):1,]  
+
+# Calculate Asset and ETF Return  
 UGA$per_asset_return <- log(UGA$Futures/lag(UGA$Futures)) * 100
 UGA$per_ETF_return <- log(UGA$UGA_MID/lag(UGA$UGA_MID)) * 100
 
+###---------------------------------------------------------------
+## Volume data ---------------------------------------------------
+###---------------------------------------------------------------
+volume <- read.csv(paste0(path,"/Data/Volume.csv"))
+volume[,3:7] <- volume[,3:7] + 1
 
-#  Volume data ------------------------------------------------------------------------
-volume <- read.csv("G:/My Drive/3_Research/Neff Paper/Working_Folder/Volume.csv")
-# subset the dataframe to only the relevant columes
-corn.volume <- data.frame(as.Date(volume$DATE), volume$CORN.Volume)
-#rename the columns
-colnames(corn.volume) <- c("DATE", "Volume")
-#Merge the Volume data with the other data
+### CORN
+# subset the dataframe to relevant columns
+corn.volume <- data.frame("DATE" = as.POSIXct(volume$DATE,
+               tz = "UTC"), "Volume" = volume$CORN.Volume)
+
+# Merge the Volume data with the other data
 CORN <- merge(CORN, corn.volume, by = "DATE")
+
 # calculate percent change in volume
-CORN$volume_return <-log(CORN$Volume/lag(CORN$Volume)) * 100
+CORN$volume_return <-log(CORN$Volume /lag(CORN$Volume)) * 100
 
-soyb.volume <- data.frame(as.Date(volume$DATE), volume$SOYB.Volume)
-colnames(soyb.volume) <- c("DATE", "Volume")
+### SOYB
+# subset the dataframe to relevant columns
+soyb.volume <- data.frame("DATE" = as.POSIXct(volume$DATE,
+              tz = "UTC"), "Volume" = volume$SOYB.Volume)
+
+# Merge the Volume data with the other data
 SOYB <- merge(SOYB, soyb.volume, by = "DATE")
-SOYB$volume_return <-log(SOYB$Volume/lag(SOYB$Volume)) * 100
 
-weat.volume <- data.frame(as.Date(volume$DATE), volume$WEAT.Volume)
-colnames(weat.volume) <- c("DATE", "Volume")
+# Note: SOme Volume were 0: which(SOYB$Volume==0) yields INf
+# calculate percent change in volume
+SOYB$volume_return <-log((SOYB$Volume)/lag(SOYB$Volume)) * 100
+
+### WEAT
+# subset the dataframe to relevant columns
+weat.volume <- data.frame("DATE" = as.POSIXct(volume$DATE,
+              tz = "UTC"), "Volume" = volume$WEAT.Volume)
+
+# Merge the Volume data with the other data
 WEAT <- merge(WEAT, weat.volume, by = "DATE")
+
+# calculate percent change in volume
 WEAT$volume_return <-log(WEAT$Volume/lag(WEAT$Volume)) * 100
 
-uso.volume <- data.frame(as.Date(volume$DATE), volume$USO.Volume)
-colnames(uso.volume) <- c("DATE", "Volume")
+### USO
+# subset the dataframe to relevant columns
+uso.volume <- data.frame("DATE" = as.POSIXct(volume$DATE,
+              tz = "UTC"), "Volume" = volume$USO.Volume)
+
+# Merge the Volume data with the other data
 USO <- merge(USO, uso.volume, by = "DATE")
+
+# calculate percent change in volume
 USO$volume_return <-log(USO$Volume/lag(USO$Volume)) * 100
 
-uga.volume <- data.frame(as.Date(volume$DATE), volume$UGA.Volume)
-colnames(uga.volume) <- c("DATE", "Volume")
+### UGA
+# subset the dataframe to relevant columns
+uga.volume <-data.frame("DATE" = as.POSIXct(volume$DATE,
+             tz = "UTC"), "Volume" = volume$UGA.Volume)
+
+# Merge the Volume data with the other data
 UGA <- merge(UGA, uga.volume, by = "DATE")
+
+# calculate percent change in volume
 UGA$volume_return <-log(UGA$Volume/lag(UGA$Volume)) * 100
 
-#--- More data cleaning
+###---------------------------------------------------------------
+## More Data Cleaning --------------------------------------------
+###---------------------------------------------------------------
+
 # The code below handles the issue of roll dates 
+
 CORN <- na.omit(CORN)  
-CORN <- CORN[!(CORN$ROLL == 1),] #directly remove roll
+CORN <- CORN[!(CORN$ROLL == 1),] # directly remove roll
 CORN.xts <- xts(CORN[,-1], order.by = CORN$DATE)
 
 SOYB <- na.omit(SOYB)
 SOYB <- SOYB[!(SOYB$ROLL == 1),]
-SOYB.xts <- xts(SOYB[,-1], order.by = SOYB$DATE) #create xts object
+SOYB.xts <- xts(SOYB[,-1], order.by = SOYB$DATE) 
 
 WEAT <- na.omit(WEAT) 
 WEAT <- WEAT[!(WEAT$ROLL == 1),]
 WEAT.xts <- xts(WEAT[,-1], order.by = WEAT$DATE)
-
 
 USO <- na.omit(USO)
 USO <- USO[!(USO$ROLL == 1),]
@@ -181,82 +178,95 @@ UGA <- na.omit(UGA)
 UGA <- UGA[!(UGA$ROLL == 1),]
 UGA.xts <- xts(UGA[,-1], order.by = UGA$DATE)
 
-#---- LM OLS Models
-corn.ols <- lm(CORN$per_ETF_return ~ CORN$per_asset_return)
-CORN$etf_asset_error <- corn.ols$residuals  # The residuals of the model are the tracking error
-CORN.xts$etf_asset_error <- corn.ols$residuals
-summary(corn.ols)
-adf.test(corn.ols$residuals)
+###---------------------------------------------------------------
+##  -------------- LM OLS   --------------------------------------
+###---------------------------------------------------------------
 
-soyb.ols <- lm(SOYB$per_ETF_return ~ SOYB$per_asset_return)
+corn.ols <- lm(per_ETF_return ~ per_asset_return, data = CORN)
+CORN$etf_asset_error <- corn.ols$residuals  
+summary(corn.ols)
+adf_corn <- adf.test(corn.ols$residuals)
+
+soyb.ols <- lm(per_ETF_return ~ per_asset_return, data = SOYB)
 SOYB$etf_asset_error <- soyb.ols$residuals 
 summary(soyb.ols)
-adf.test(soyb.ols$residuals)
+adf_soyb <-adf.test(soyb.ols$residuals)
 
-weat.ols <- lm(WEAT$per_ETF_return ~ WEAT$per_asset_return)
+weat.ols <- lm(per_ETF_return ~ per_asset_return, data = WEAT)
 WEAT$etf_asset_error <- weat.ols$residuals
 summary(weat.ols)
-adf.test(soyb.ols$residuals)
+adf_weat <- adf.test(weat.ols$residuals)
 
-uso.ols <- lm(USO$per_ETF_return ~USO$per_asset_return)
+uso.ols <- lm(per_ETF_return ~ per_asset_return, data = USO)
 USO$etf_asset_error <- uso.ols$residuals
 summary(uso.ols)
-adf.test(uso.ols$residuals)
+adf_uso <- adf.test(uso.ols$residuals)
 
-uga.ols <- lm(UGA$per_ETF_return ~ UGA$per_asset_return)
+uga.ols <- lm(per_ETF_return ~ per_asset_return, data = UGA)
 UGA$etf_asset_error <- uga.ols$residuals
 summary(uga.ols)
-adf.test(uga.ols$residuals)
+adf_uga <- adf.test(uga.ols$residuals)
 
+c("corn" = adf_corn$p.value, "soyb" = adf_soyb$p.value,
+  "weat" = adf_weat$p.value, "uso" = adf_uso$p.value, 
+  "uga" = adf_uga$p.value)
 
 #--- ETF Returns
 
-summary(corn.ols)
-
 plot(CORN$per_asset_return, CORN$per_ETF_return)
-line(x = CORN$per_asset_return, y =CORN$per_ETF_return)
+abline(corn.ols, col = "red")
 
+pdf(paste0(path,"/Figures/ETF_Return.pdf"),height = 8,
+    width = 10)
 par(mfrow = c(3, 2), mai = c(0.25, 0.5, 0.2, 0.05))
 plot(CORN$DATE, CORN$per_ETF_return, type = "l", main = "CORN",
-     xlab = "", ylab = "", ylim = c(-10, 10))
+     xlab = "", ylab = "")
 plot(SOYB$DATE, SOYB$per_ETF_return, type = "l", main = "SOYB",
-     xlab = "", ylab = "", ylim = c(-10, 10))
+     xlab = "", ylab = "")
 plot(WEAT$DATE, WEAT$per_ETF_return, type = "l", main = "WEAT",
-     xlab = "", ylab = "Percent Return", ylim = c(-10, 10))
+     xlab = "", ylab = "Percent Return")
 plot(USO$DATE, USO$per_ETF_return, type = "l", main = "USO", 
-     xlab = "", ylab = "", ylim = c(-10, 10))
+     xlab = "", ylab = "") 
 plot(UGA$DATE, UGA$per_ETF_return, type = "l", main = "UGA",
-     xlab = "", ylab = "", ylim = c(-10, 10))
+     xlab = "", ylab = "") 
 dev.off()
 
 #-- Asset Returns
+pdf(paste0(path,"/Figures/Asset_Return.pdf"),height = 8,
+    width = 10)
 par(mfrow = c(3, 2), mai = c(0.25, 0.5, 0.2, 0.05))
 plot(CORN$DATE, CORN$per_asset_return, type = "l", main = "CORN",
-     xlab = "", ylab = "", ylim = c(-10, 10))
+     xlab = "", ylab = "")
 plot(SOYB$DATE, SOYB$per_asset_return, type = "l", main = "SOYB",
-     xlab = "", ylab = "", ylim = c(-10, 10))
+     xlab = "", ylab = "")
 plot(WEAT$DATE, WEAT$per_asset_return, type = "l", main = "WEAT",
-     xlab = "", ylab = "Percent Return", ylim = c(-10, 10))
+     xlab = "", ylab = "Percent Return")
 plot(USO$DATE, USO$per_asset_return, type = "l", main = "USO", 
-     xlab = "", ylab = "", ylim = c(-10, 10))
+     xlab = "", ylab = "")
 plot(UGA$DATE, UGA$per_asset_return, type = "l", main = "UGA",
-     xlab = "", ylab = "", ylim = c(-10, 10))
+     xlab = "", ylab = "")
+dev.off()
 
 #--Tracking Error
+pdf(paste0(path,"/Figures/Tracking_Error.pdf"),height = 8,
+    width = 10)
 par(mfrow = c(3, 2), mai = c(0.25, 0.5, 0.2, 0.05))
 plot(CORN$DATE, CORN$etf_asset_error, type = "l", main = "CORN",
-     xlab = "", ylab = "", ylim = c(-5, 5))
+     xlab = "", ylab = "")
 plot(SOYB$DATE, SOYB$etf_asset_error, type = "l", main = "SOYB",
-     xlab = "", ylab = "", ylim = c(-5, 5))
+     xlab = "", ylab = "")
 plot(WEAT$DATE, WEAT$etf_asset_error, type = "l", main = "WEAT",
-     xlab = "", ylab = "Percent Error", ylim = c(-5, 5))
+     xlab = "", ylab = "Percent Error")
 plot(USO$DATE, USO$etf_asset_error, type = "l", main = "USO", 
-     xlab = "", ylab = "", ylim = c(-5, 5))
+     xlab = "", ylab = "")
 plot(UGA$DATE, UGA$etf_asset_error, type = "l", main = "UGA",
-     xlab = "", ylab = "", ylim = c(-5, 5))
-
+     xlab = "", ylab = "")
+dev.off()
 
 #--Squared Tracking Error
+
+pdf(paste0(path,"/Figures/Squared_Tracking_Error.pdf"),height = 8,
+    width = 10)
 par(mfrow = c(3, 2), mai = c(0.25, 0.5, 0.2, 0.05))
 plot(CORN$DATE, CORN$etf_asset_error^2, type = "l", main = "CORN",
      xlab = "", ylab = "")
@@ -268,17 +278,19 @@ plot(USO$DATE, USO$etf_asset_error^2, type = "l", main = "USO",
      xlab = "", ylab = "")
 plot(UGA$DATE, UGA$etf_asset_error^2, type = "l", main = "UGA",
      xlab = "", ylab = "")
-
-ggtsdisplay(SOYB$etf_asset_error)
 dev.off()
 
-#--------------------------------------------------------------------------------------------------------
-# Base Garch Models
+ggtsdisplay(SOYB$etf_asset_error)
 
-'corn.base_model_spec <- ugarchspec(variance.model = list( garchOrder = c(1,1)),
+
+###---------------------------------------------------------------
+##  -------------- Base Garch Models -----------------------------
+###---------------------------------------------------------------
+
+corn.base_model_spec <- ugarchspec(variance.model = list( garchOrder = c(1,1)),
                               mean.model = list(armaOrder = c(2,1)))
 corn.base_fit <- ugarchfit(data = CORN$etf_asset_error, spec = corn.base_model_spec, solver = 'hybrid')
-corn.base_fit'
+corn.base_fit
 
 soyb.base_model_spec <- ugarchspec(variance.model = list( garchOrder = c(1,1)),
                               mean.model = list(armaOrder = c(0,1)))

@@ -333,7 +333,7 @@ Using a student-t distribution significantly improves model fit. Within the mode
 
 Before we switch gears and try this out with an ARMA process, there are two external variables which I believe have very strong support for being included in the mean process. The first is the volatility of asset returns. *Is the tracking error time varying* found that tracking error increased significantly in times of high volatility. The second variable that I believe is appropriate in the mean is backwardation. The shape of the futures curve is a major concern for ETFs which need to roll before contract expiration and rebalance. In highly backwarded markets, ETP managers may more aggressively rebalance in the back of the curve. 
 
-There are multiple ways we might try to capture the volatility of the underlying. Here I try three ways. In each of the results mxreg1 is the coefficient in question. The best model fit of this group is using the absolute value of the asset return, which is the methodology of the original Neff paper. Still, the fit is not better than the base and the coefficient is not statistically significant at the 5% level.
+There are multiple ways we might try to capture the volatility of the underlying. Here I try three ways. In each of the results mxreg1 is the coefficient in question. The best model fit of this group is using the absolute value of the asset return, which is the methodology of the original Neff paper. The absolute value is significant at the five percent level. However, I have been thinking about this a lot. My intuition says that we should **not** use absolute value because I expect that the error will come from the ETF lagging the assets..... as the same time, shouldn't we have already accounted for this in our OLS equation? maybe absolute is appropriate here?
 
 ```{r corn_6, echo = FALSE}
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'sGARCH'), 
@@ -566,7 +566,7 @@ We find that include ARCH in mean or the unconditional mean does not improve mod
 x <- SOYB
 ```
 
-Lets begin by looking at the OLS results for soybeans. Unlike CORN, we fail to reject both of our null hypothesis ($\alpha = 0$ and $\beta = 1$). This is interesting considering the large size of tracking error in 2013.
+Lets begin by looking at the OLS results for soybeans. Unlike CORN, we fail to reject both of our null hypothesis ($\alpha = 0$ and $\beta = 1$). This is interesting considering the large size of tracking error in 2013-14.
 
 ```{r soyb_ols, echo = FALSE}
 ols <- lm(x$per_ETF_return ~ x$per_asset_return)
@@ -604,7 +604,7 @@ base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
 ```
 
-The ARCH in mean coefficient is not statistically significant at the 5% level, and including it help model fit. 
+The ARCH in mean coefficient is not statistically significant at the 5% level, and including it does not help model fit. 
 
 ```{r soyb_3, echo = FALSE}
 
@@ -619,7 +619,7 @@ infocriteria(base.1.fit)
 
 ```
 
-As with CORN, lets compare different asymmetric specifications, still assuming a normal distribution. 
+As with CORN, lets compare different asymmetric specifications, still assuming a normal distribution. I find not reason to move to an asymmetric model.
 
 ```{r soyb_4, echo = FALSE}
 
@@ -661,7 +661,7 @@ infocriteria(base.1.fit)
 
 ```
 
-Based on AIC, apARCH has the best fit, followed by the standard. I am going to keep this in mind, but continue with the base model.  Again, I will replace the normal distribution with the student t distribution. 
+Again, I will replace the normal distribution with the student t distribution. 
 
 ```{r soyb_5, echo=FALSE}
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'sGARCH'),
@@ -702,7 +702,7 @@ infocriteria(base.1.fit)
 
 ```
 
-As with CORN, using a student-t distribution significantly improves model fit. However, unlike CORN, the asymmetric models have better fit based off AIC. The intution I have built up is making me cautious of going towards an asymmetric approach, but I will continue to compare these models as I move forward. I now add in the two external variables, just as I did with CORN. I will again start by testimg which crude metric for asset volatility does the best job. Again absolute percent return is the preferred metric based off AIC and the statistical significance of the value. 
+As with CORN, using a student-t distribution significantly improves model fit abd the standard model wins. I now add in the two external variables, just as I did with CORN. I will again start by testing which crude metric for asset volatility does the best job. Again absolute percent return is the preferred metric based off AIC and the statistical significance of the value. 
 
 
 
@@ -791,49 +791,8 @@ infocriteria(base.1.fit)
 
 ```
 
-Before we go on to an ARMA process, lets revisit our asymmetric flavor of GARCH but this time including the two external variables in the Mean. 
 
-```{r soyb_8, echo = FALSE}
-
-base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
-                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE,
-                                   external.regressors = as.matrix(cbind(x$backward, abs(x$per_asset_return)))))
-base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
-
-"Standard GARCH Robust Coefficients"
-base.1.fit@fit[['robust.matcoef']]
-infocriteria(base.1.fit)
-
-
-base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "apARCH"),
-                          mean.model = list(armaOrder = c(0,0), include.mean = TRUE))
-base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
-"Asymmetric Power ARCH (apARCH) Robust Coefficients"
-base.1.fit@fit[['robust.matcoef']]
-infocriteria(base.1.fit)
-
-
-base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'gjrGARCH'),
-                          mean.model = list(armaOrder = c(0,0), include.mean = TRUE, 
-                                            archm = FALSE))
-base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
-
-"GJR ARCH Robust Coefficients"
-base.1.fit@fit[['robust.matcoef']]
-infocriteria(base.1.fit)
-
-
-base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'eGARCH'),
-                          mean.model = list(armaOrder = c(0,0), include.mean = TRUE, 
-                                            archm = FALSE ))
-base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
-"eARCH Robust Coefficients"
-base.1.fit@fit[['robust.matcoef']]
-infocriteria(base.1.fit)
-
-```
-
-
+-------------
 !!!!
 Now lets start over and fit an ARMA process to the residuals. I utilize the Box- Jenkins procedure to fit the model. A good specification would have no autocorrelation in the residuals, but autocorrelation in the squared residuals.
 
