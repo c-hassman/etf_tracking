@@ -1,159 +1,78 @@
 ---
 title: "Base GARCH Model Comparision"
 author: "Colburn Hassman"
-date: "11/9/2020"
+date: "11/17/2020"
 output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(readxl)
 library(tseries)
 library(xts)
 library(tidyverse)
 library(fpp2)
 library(stats)
 library(rugarch)
-setwd("G:/My Drive/3_Research/Neff Paper/Working_Folder")
+setwd("~/Documents/etf_tracking")
 
 ```
 
 ```{r data_import, include = FALSE, echo=FALSE, warning=FALSE}
 
 #-----------------Import Data from Excel and order------------#
-CORN <- read_excel("G:/My Drive/3_Research/Neff Paper/Working_Folder/Data_Update.xlsx", 
-                   sheet = "CORN", col_types = c("numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric"))
-SOYB <- read_excel("G:/My Drive/3_Research/Neff Paper/Working_Folder/Data_Update.xlsx", 
-                   sheet = "SOYB", col_types = c("numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric"))
-WEAT <- read_excel("G:/My Drive/3_Research/Neff Paper/Working_Folder/Data_Update.xlsx", 
-                   sheet = "WEAT", col_types = c("numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric", 
-                                                 "numeric", "numeric", "numeric"))
-USO <- read_excel("G:/My Drive/3_Research/Neff Paper/Working_Folder/Data_Update.xlsx", 
-                  sheet = "USO", col_types = c("numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric"))
+CORN <- read.csv("~/Documents/etf_tracking/corn.csv")
+SOYB <- read.csv("~/Documents/etf_tracking/soyb.csv")
+WEAT <- read.csv("~/Documents/etf_tracking/weat.csv")
+USO <- read.csv("~/Documents/etf_tracking/uso.csv")
+UGA <- read.csv("~/Documents/etf_tracking/uga.csv")
 
-UGA <- read_excel("G:/My Drive/3_Research/Neff Paper/Working_Folder/Data_Update.xlsx", 
-                  sheet = "UGA", col_types = c("numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric", "numeric", "numeric", 
-                                               "numeric"))
+
 
 #------------------Date Manipulation and Cleaning---------------#
-CORN$DATE <- as.Date(CORN$DATE, origin = "1899-12-30")  #set date 
+
+# When importing data from csv, for some reason empty columns are created
+# This is only a temporary solution to this problem
+CORN <- CORN[1:(length(CORN)-2)]
+SOYB <- SOYB[1:(length(SOYB)-1)]
+WEAT <- WEAT[1:(length(WEAT)-2)]
+# USO Good
+UGA <- UGA[1:(length(UGA)-1)]
+
+
+
+
+CORN$DATE <- as.Date(CORN$DATE, format = "%m/%d/%Y")  #set date 
 CORN <- CORN[order(CORN$DATE),] #order by date
-CORN$asset_basket <- (CORN$`F1(.35)` * 0.35) + (CORN$`F2(.3)` * 0.3) + (CORN$`F3(.35)` * 0.35) #reconstruct asset basket
+CORN$asset_basket <- (CORN$`F1..35.` * 0.35) + (CORN$`F2..3.` * 0.3) + (CORN$`F3..35.` * 0.35) #reconstruct asset basket
 CORN$per_asset_return <- log(CORN$asset_basket/lag(CORN$asset_basket))* 100 # calculate percent asset basket return
 CORN$per_ETF_return <- log(CORN$CORN_MID/lag(CORN$CORN_MID)) * 100#calculate percent ETF return
 
 
-SOYB$DATE <- as.Date(SOYB$DATE, origin = "1899-12-30") # Set date
+SOYB$DATE <- as.Date(SOYB$DATE, format = "%m/%d/%Y") # Set date
 SOYB <- SOYB[order(SOYB$DATE),] #order by date
-SOYB$asset_basket <- (SOYB$`F1(.35)` * 0.35) + (SOYB$`F2(.3)` * 0.30) + (SOYB$`F3(.35)` * 0.35)
+SOYB$asset_basket <- (SOYB$`F1..35.` * 0.35) + (SOYB$`F2..3.` * 0.30) + (SOYB$`F3..35.` * 0.35)
 SOYB$per_asset_return <- log(SOYB$asset_basket / lag(SOYB$asset_basket)) * 100
 SOYB$per_ETF_return <- log(SOYB$SOYB_MID / lag(SOYB$SOYB_MID)) * 100
 
 
-WEAT$DATE <- as.Date(WEAT$DATE, origin = "1899-12-30")  #set date 
+WEAT$DATE <- as.Date(WEAT$DATE, format = "%m/%d/%Y") #set date 
 WEAT <- WEAT[order(WEAT$DATE),] #order by date
-WEAT$asset_basket <- (WEAT$`F1(.35)` * 0.35) + (WEAT$`F2(.3)` * 0.3) + (WEAT$`F3(.35)` * 0.35) #reconstruct asset basket
+WEAT$asset_basket <- (WEAT$`F1..35.` * 0.35) + (WEAT$`F2..3.` * 0.3) + (WEAT$`F3..35.` * 0.35) #reconstruct asset basket
 WEAT$per_asset_return <- log(WEAT$asset_basket/lag(WEAT$asset_basket))* 100 # calculate percent asset basket return
 WEAT$per_ETF_return <- log(WEAT$WEAT_MID/lag(WEAT$WEAT_MID)) * 100#calculate percent ETF return
 
 
-USO$DATE <- as.Date(USO$DATE, origin = "1899-12-30") 
+USO$DATE <- as.Date(USO$DATE, format = "%m/%d/%Y")
 USO <- USO[order(USO$DATE),]
 USO$per_asset_return <- log(USO$Futures/lag(USO$Futures)) * 100
 USO$per_ETF_return <- log(USO$USO_MID /lag(USO$USO_MID)) * 100
 
-
-UGA$DATE <- as.Date(UGA$DATE, origin = "1899-12-30") 
+UGA$DATE <- as.Date(UGA$DATE, format = "%m/%d/%Y")
 UGA <- UGA[order(UGA$DATE),]
 UGA$per_asset_return <- log(UGA$Futures/lag(UGA$Futures)) * 100
 UGA$per_ETF_return <- log(UGA$UGA_MID/lag(UGA$UGA_MID)) * 100
 
 
-#  Volume data ------------------------------------------------------------------------
-volume <- read.csv("G:/My Drive/3_Research/Neff Paper/Working_Folder/Volume.csv")
-# subset the dataframe to only the relevant columes
-corn.volume <- data.frame(as.Date(volume$DATE), volume$CORN.Volume)
-#rename the columns
-colnames(corn.volume) <- c("DATE", "Volume")
-#Merge the Volume data with the other data
-CORN <- merge(CORN, corn.volume, by = "DATE")
-# calculate percent change in volume
-CORN$volume_return <-log(CORN$Volume/lag(CORN$Volume)) * 100
-
-soyb.volume <- data.frame(as.Date(volume$DATE), volume$SOYB.Volume)
-colnames(soyb.volume) <- c("DATE", "Volume")
-SOYB <- merge(SOYB, soyb.volume, by = "DATE")
-SOYB$volume_return <-log(SOYB$Volume/lag(SOYB$Volume)) * 100
-
-weat.volume <- data.frame(as.Date(volume$DATE), volume$WEAT.Volume)
-colnames(weat.volume) <- c("DATE", "Volume")
-WEAT <- merge(WEAT, weat.volume, by = "DATE")
-WEAT$volume_return <-log(WEAT$Volume/lag(WEAT$Volume)) * 100
-
-uso.volume <- data.frame(as.Date(volume$DATE), volume$USO.Volume)
-colnames(uso.volume) <- c("DATE", "Volume")
-USO <- merge(USO, uso.volume, by = "DATE")
-USO$volume_return <-log(USO$Volume/lag(USO$Volume)) * 100
-
-uga.volume <- data.frame(as.Date(volume$DATE), volume$UGA.Volume)
-colnames(uga.volume) <- c("DATE", "Volume")
-UGA <- merge(UGA, uga.volume, by = "DATE")
-UGA$volume_return <-log(UGA$Volume/lag(UGA$Volume)) * 100
 
 #--- More data cleaning
 # The code below handles the issue of roll dates 
@@ -186,14 +105,35 @@ The goal of this document is to describe the thought process behind the base GAR
 
 $$ R^e_{t} = \alpha + \beta R^a_{t} + \epsilon_{t} $$
 
-where $R^e$ is the return of the asset and $R^a$ is the return of the asset. Other literature defined the difference between these two returns as *tracking difference* which is analogous to setting $\alpha$ to 0 and $\beta$ to 1. By incorporating $\alpha$ and $\beta$ we capture systematic differences in returns such as those caused by the management fee or so-called *cash drag*. For further discussions on definitions of tracking ability, see Davidson *et al.*
+where $R^e$ is the return of the etf and $R^a$ is the return of the asset. We define *tracking error* thus as $\epsilon_{t}$.
 
-We define *tracking error* thus as $\epsilon_{t}$, but we may give more thought to the specific language of that. It will be important to define exactly what we mean and what we are measuring. Your input on this matter is greatly appredicated
+For each ETF I employ the following methology for fitting a base mode. I will go one-by-one through each ETF investigating the tracking error ($\epsilon_{t}$). 
 
-The general outline for what follows is such: I will go one-by-one through each ETF investigating the tracking error ($\epsilon_{t}$). I will first test for ARCH effects by analyzing the autocorrelation of squared tracking error. I will then go on to test multiple specifications of a GARCH(1,1) model, including those with ARCH in Mean, those with an ARMA process in the mean, and those with external variables in the mean. For fitting the ARMA process, I will utilize the 
+1. Test for ARCH effects by analysing the autocorrelation of the squared tracking error
+2. Test for inclusion of unconditional mean in GARCH specification
+3. Test for inclusion of ARCH in mean in GARCH specification
+4. Consider asymmetric specifications
+5. Consider student-t distribution rather than normal
+6. Reconsider asymmetric specification with student-t distribution
+7. Fit ARMA process using Box-Jenkins Procedure
+8. Repeat steps 2:6 including an ARMA process in the model specification
+9. Summarize my findings. 
 
-Just some thoughts before I get going: based off all of my prior model runs, I suspect fitting an ARMA process will greatly improve model fit. I believe that wihtout an ARMA process, no external variance variables will be significant. 
+Below are the summaries for each ETF. What follows after is the full process for each ETF. 
 
+**CORN Summary**
+
+We find that include ARCH in mean or the unconditional mean does not improve model fit. The assumed distribution is important: the student t distribution is a much better fit than the normal. Regardless of distribution, asymmetric model specifications do not improve model fit. Fitting an ARMA process (in this case an MA1 process) greatly improves model fit.
+
+**SOYB Summary**
+
+As with CORN, it is likely best to not include ARCH in mean or the unconditional mean in this model specification. Model fit was greatly improved by fitting an ARMA(2,3) process and further greatly improved by using a student-t distribution. Unlike CORN, some of the Asymmetric specifications did have a better fit. 
+
+**WEAT Summary**
+
+As with CORN and SOYB, it is likely best to not include ARCH in mean or the unconditional mean in this model specification as it does not improve model fit or produce significant coefficients. Fitting an ARMA (1,5) process also improved fit significantly. Changing from a normal distribution to a student t distribution *slightly* improved model fit. Asymmetric models did not have better fit. 
+
+\newpage
 ## Corn
 
 ```{r corn_setup, echo = FALSE}
@@ -288,11 +228,11 @@ infocriteria(base.1.fit)
 
 ```
 
-No asymmetric model we have tested has a better fit than the base. We may also try some different distributions. Ramos 2015 used a student-t distribution which introduces two new coefficients: *shape* and *skew* 
+No asymmetric model we have tested has a better fit than the base. We may also try some different distributions. Ramos 2015 used a student-t distribution which introduces a new coefficient *skew*
 
 ```{r corn_5, echo=FALSE}
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'sGARCH'),
-                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE),                                                  distribution.model = 'sstd')
+                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE),                                                  distribution.model = 'std')
 base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
 
 "Base Robust Coefficients"
@@ -302,7 +242,7 @@ infocriteria(base.1.fit)
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "apARCH"),
                           mean.model = list(armaOrder = c(0,0), include.mean = TRUE, 
-                                            archm = FALSE ), distribution.model = 'sstd')
+                                            archm = FALSE ), distribution.model = 'std')
 base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
 "Asymmetric Power ARCH (apARCH) Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
@@ -311,7 +251,7 @@ infocriteria(base.1.fit)
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "gjrGARCH"),
                           mean.model = list(armaOrder = c(0,0), include.mean = TRUE, 
-                                            archm = FALSE ), distribution.model = 'sstd')
+                                            archm = FALSE ), distribution.model = 'std')
 base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
 
 "GJR ARCH Robust Coefficients"
@@ -321,7 +261,7 @@ infocriteria(base.1.fit)
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "eGARCH"),
                           mean.model = list(armaOrder = c(0,0), include.mean = TRUE, 
-                                            archm = FALSE ), distribution.model = 'sstd')
+                                            archm = FALSE ), distribution.model = 'std')
 base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
 "eARCH Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
@@ -331,76 +271,10 @@ infocriteria(base.1.fit)
 
 Using a student-t distribution significantly improves model fit. Within the models we test, the base, non asymmetric model still has the best fit. 
 
-Before we switch gears and try this out with an ARMA process, there are two external variables which I believe have very strong support for being included in the mean process. The first is the volatility of asset returns. *Is the tracking error time varying* found that tracking error increased significantly in times of high volatility. The second variable that I believe is appropriate in the mean is backwardation. The shape of the futures curve is a major concern for ETFs which need to roll before contract expiration and rebalance. In highly backwarded markets, ETP managers may more aggressively rebalance in the back of the curve. 
-
-There are multiple ways we might try to capture the volatility of the underlying. Here I try three ways. In each of the results mxreg1 is the coefficient in question. The best model fit of this group is using the absolute value of the asset return, which is the methodology of the original Neff paper. The absolute value is significant at the five percent level. However, I have been thinking about this a lot. My intuition says that we should **not** use absolute value because I expect that the error will come from the ETF lagging the assets..... as the same time, shouldn't we have already accounted for this in our OLS equation? maybe absolute is appropriate here?
-
-```{r corn_6, echo = FALSE}
-base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'sGARCH'), 
-                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE,
-                                          external.regressors = as.matrix(x$per_asset_return)),                           distribution.model = 'sstd')
-base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
-
-"Asset Percent Return"
-base.1.fit@fit[['robust.matcoef']]
-infocriteria(base.1.fit)
-
-base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'sGARCH'),
-                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE,
-                                   external.regressors = as.matrix(abs(x$per_asset_return))),   
-                                          distribution.model = 'sstd')
-base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
-
-"Absolute Value of Percent Asset Return"
-base.1.fit@fit[['robust.matcoef']]
-infocriteria(base.1.fit)
-base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'sGARCH'),
-                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE,
-                                          external.regressors = as.matrix(x$per_asset_return^2)),                           distribution.model = 'sstd')
-base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
-
-"Squared Asset Percent Returns"
-base.1.fit@fit[['robust.matcoef']]
-infocriteria(base.1.fit)
-
-```
-
-I will now add the backwardation external variable to two models: one with no other mean external variables, the other which includes the absolute value of the mean. Here I define backwardation only with regard to the second and third contract to expire. For these models mxreg1 is the backwardation coefficient, mxreg2 is the absolute asset return where applicable 
-
-```{r corn_7, echo = FALSE}
-x$backward <- 0
-for(i in 1:nrow(x)){
-  if(x$`F2(.3)`[i] - x$`F1(.35)`[i] <1){
-    x$backward[i] <- 1
-  }
-}
-
-base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'sGARCH'),
-                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE,
-                                   external.regressors = as.matrix(x$backward)),   
-                                          distribution.model = 'sstd')
-base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
-
-"Only Backwardation included"
-base.1.fit@fit[['robust.matcoef']]
-infocriteria(base.1.fit)
-
-
-base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'sGARCH'),
-                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE,
-                                   external.regressors = as.matrix(cbind(x$backward, abs(x$per_asset_return)))),   
-                                          distribution.model = 'sstd')
-base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
-
-"Backwardation and Absolute Value of Percent Asset Return"
-base.1.fit@fit[['robust.matcoef']]
-infocriteria(base.1.fit)
-
-
-```
 Now lets start over and fit an ARMA process to the residuals. I utilize the Box- Jenkins procedure to fit the model. A good specification would have no autocorrelation in the residuals, but autocorrelation in the squared residuals.
 
 The autocorrelation of the residuals is significant, but dies off very slowly. With a max lag of 10, an ARMA(0,1) model has the characteristics we are searching for. 
+
 ```{r corn_arma1, echo=FALSE}
 checkresiduals(x$etf_asset_error)
 
@@ -409,7 +283,9 @@ Box.test(a$residuals, lag = 10, type = 'Ljung-Box')
 Box.test(a$residuals^2, lag = 10, type = 'Ljung-Box')
 ```
 
+
 Now let's start over from the beginning with out base GARCH model and see if we should include the unconditional mean. Immediately huge improvements in model fit by including an MA process. The fit does not improve when including the unconditional mean, so I will leave it out. 
+
 
 ```{r corn_arma2, echo=FALSE}
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
@@ -427,7 +303,6 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "Including Unconditional Mean Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
-
 ```
 
 As in the non ARMA specification, the archm coefficient is not statistically significant and its inclusion does not help model fit. 
@@ -466,7 +341,7 @@ infocriteria(base.1.fit)
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
                           mean.model = list(armaOrder = c(0,1), include.mean = FALSE),
-                          distribution.model = 'sstd')
+                          distribution.model = 'std')
 base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
 
 "Student t Distribution Robust Coefficients"
@@ -480,7 +355,7 @@ As we saw with the GARCH process with an ARMA process, asymmetric model specific
 ```{r corn_arma5, echo=FALSE}
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
                           mean.model = list(armaOrder = c(0,1), include.mean = FALSE),
-                          distribution.model = 'sstd')
+                          distribution.model = 'std')
 base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
 
 "Standard GARCH Robust Coefficients"
@@ -491,7 +366,7 @@ infocriteria(base.1.fit)
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "apARCH"),
                           mean.model = list(armaOrder = c(0,1), include.mean = FALSE),
-                          distribution.model = 'sstd')
+                          distribution.model = 'std')
 base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
 
 "Asymmetric Power GARCH (apGARCH) Robust Coefficients"
@@ -500,7 +375,7 @@ infocriteria(base.1.fit)
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "gjrGARCH"),
                           mean.model = list(armaOrder = c(0,1), include.mean = FALSE),
-                          distribution.model = 'sstd')
+                          distribution.model = 'std')
 base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
 
 "GJR GARCH Robust Coefficients"
@@ -509,45 +384,10 @@ infocriteria(base.1.fit)
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "eGARCH"),
                           mean.model = list(armaOrder = c(0,1), include.mean = FALSE),
-                          distribution.model = 'sstd')
+                          distribution.model = 'std')
 base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
 
 "Exponential Power GARCH Robust Coefficients"
-base.1.fit@fit[['robust.matcoef']]
-infocriteria(base.1.fit)
-
-```
-I will not test three specifications of external variables: one with only Absolute Percent Asset Returns, one with only Backwardation, and one with both. We find exactly what we found for the non ARMA specification: asset return is not significant by itself, backwardation is, and together both are. The best model in terms of AIC includes both. 
-
-```{r corn_arma6, echo = FALSE}
-base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
-                          mean.model = list(armaOrder = c(0,1), include.mean = FALSE,
-                                external.regressors = as.matrix(abs(x$per_asset_return))),
-                          distribution.model = 'sstd')
-base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
-
-"Absolute Percentage Asset Returns Robust Coefficients"
-base.1.fit@fit[['robust.matcoef']]
-infocriteria(base.1.fit)
-
-base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
-                          mean.model = list(armaOrder = c(0,1), include.mean = FALSE,
-                                external.regressors = as.matrix(x$backward)),
-                          distribution.model = 'sstd')
-base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
-
-"Backwardation Robust Coefficients"
-base.1.fit@fit[['robust.matcoef']]
-infocriteria(base.1.fit)
-
-
-base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
-                          mean.model = list(armaOrder = c(0,1), include.mean = FALSE,
-                          external.regressors = as.matrix(cbind(abs(x$per_asset_return), x$backward))),
-                          distribution.model = 'sstd')
-base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
-
-"Absolute Asset returns (mxreg1) and Backwardation (mxreg2) Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
 
@@ -556,9 +396,10 @@ infocriteria(base.1.fit)
 
 ### CORN Summary
 
-We find that include ARCH in mean or the unconditional mean does not improve model fit. The assumed distribution is important: the student t distribution is a much better fit than the normal. Regardless of distribution, asymmetric model specifications do not improve model fit. Fitting an ARMA process (in this case an MA1 process) greatly improves model fit. Regardless of ARMA process, the best fitting model includes both the absolute value of the asset return and a dummy variable for backwardation in the mean equation. 
+We find that include ARCH in mean or the unconditional mean does not improve model fit. The assumed distribution is important: the student t distribution is a much better fit than the normal. Regardless of distribution, asymmetric model specifications do not improve model fit. Fitting an ARMA process (in this case an MA1 process) greatly improves model fit.
 
 
+\newpage
 
 ## Soybeans
 
@@ -566,7 +407,7 @@ We find that include ARCH in mean or the unconditional mean does not improve mod
 x <- SOYB
 ```
 
-Lets begin by looking at the OLS results for soybeans. Unlike CORN, we fail to reject both of our null hypothesis ($\alpha = 0$ and $\beta = 1$). This is interesting considering the large size of tracking error in 2013-14.
+Lets begin by looking at the OLS results for soybeans. Unlike CORN, we fail to reject both of our null hypothesis ($\alpha = 0$ and $\beta = 1$). 
 
 ```{r soyb_ols, echo = FALSE}
 ols <- lm(x$per_ETF_return ~ x$per_asset_return)
@@ -584,7 +425,7 @@ tsdisplay(ols$residuals^2)
 Box.test(ols$residuals^2, type = "Ljung-Box")
 ```
 
-Just as in CORN, including the unconditional mean is unimformative.
+Including the unconditional mean is unimformative.
 
 ```{r soyb_1, echo = FALSE}
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
@@ -661,11 +502,11 @@ infocriteria(base.1.fit)
 
 ```
 
-Again, I will replace the normal distribution with the student t distribution. 
+Again, I will replace the normal distribution with the student t distribution. Model fit improves significantly. Notably, an two asymmetric models: the asymmetric power ARCH and GJR ARCH have better fits than the standard model. 
 
 ```{r soyb_5, echo=FALSE}
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'sGARCH'),
-                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE),                                                  distribution.model = 'sstd')
+                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE),                                                         distribution.model = 'std')
 base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
 
 "Standard GARCH Robust Coefficients"
@@ -674,8 +515,8 @@ infocriteria(base.1.fit)
 
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "apARCH"),
-                          mean.model = list(armaOrder = c(0,0), include.mean = TRUE, 
-                                            archm = FALSE ), distribution.model = 'sstd')
+                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE, 
+                                            archm = FALSE ), distribution.model = 'std')
 base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
 "Asymmetric Power ARCH (apARCH) Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
@@ -683,8 +524,8 @@ infocriteria(base.1.fit)
 
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "gjrGARCH"),
-                          mean.model = list(armaOrder = c(0,0), include.mean = TRUE, 
-                                            archm = FALSE ), distribution.model = 'sstd')
+                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE, 
+                                            archm = FALSE ), distribution.model = 'std')
 base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
 
 "GJR ARCH Robust Coefficients"
@@ -693,8 +534,8 @@ infocriteria(base.1.fit)
 
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "eGARCH"),
-                          mean.model = list(armaOrder = c(0,0), include.mean = TRUE, 
-                                            archm = FALSE ), distribution.model = 'sstd')
+                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE, 
+                                            archm = FALSE ), distribution.model = 'std')
 base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
 "eARCH Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
@@ -702,114 +543,24 @@ infocriteria(base.1.fit)
 
 ```
 
-As with CORN, using a student-t distribution significantly improves model fit abd the standard model wins. I now add in the two external variables, just as I did with CORN. I will again start by testing which crude metric for asset volatility does the best job. Again absolute percent return is the preferred metric based off AIC and the statistical significance of the value. 
 
-
-
-```{r soyb_6, echo = FALSE}
-base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'sGARCH'), 
-                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE,
-                                          external.regressors = as.matrix(x$per_asset_return)),                           distribution.model = 'sstd')
-base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
-
-"Asset Percent Return"
-base.1.fit@fit[['robust.matcoef']]
-infocriteria(base.1.fit)
-
-base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'sGARCH'),
-                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE,
-                                   external.regressors = as.matrix(abs(x$per_asset_return))),   
-                                          distribution.model = 'sstd')
-base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
-
-"Absolute Value of Percent Asset Return"
-base.1.fit@fit[['robust.matcoef']]
-infocriteria(base.1.fit)
-
-base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'sGARCH'),
-                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE,
-                                          external.regressors = as.matrix(x$per_asset_return^2)),                           distribution.model = 'sstd')
-base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
-
-"Squared Asset Percent Returns"
-base.1.fit@fit[['robust.matcoef']]
-infocriteria(base.1.fit)
-
-```
-
-I will now add the backwardation external variable. Just as in CORN, the best fitting model included both external variables. 
-
-```{r soyb_7, echo = FALSE}
-base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'sGARCH'),
-                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE),                                                  distribution.model = 'sstd')
-base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
-
-"No Externals Included Robust Coefficients"
-base.1.fit@fit[['robust.matcoef']]
-infocriteria(base.1.fit)
-
-
-
-base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'sGARCH'),
-                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE,
-                                   external.regressors = as.matrix(abs(x$per_asset_return))),   
-                                          distribution.model = 'sstd')
-base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
-
-"Only Absolute Value of Percent Asset Return"
-base.1.fit@fit[['robust.matcoef']]
-infocriteria(base.1.fit)
-
-x$backward <- 0
-for(i in 1:nrow(x)){
-  if(x$`F2(.3)`[i] - x$`F1(.35)`[i] <1){
-    x$backward[i] <- 1
-  }
-}
-
-base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'sGARCH'),
-                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE,
-                                   external.regressors = as.matrix(x$backward)),   
-                                          distribution.model = 'sstd')
-base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
-"Only Backwardation included"
-base.1.fit@fit[['robust.matcoef']]
-infocriteria(base.1.fit)
-
-
-
-base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'sGARCH'),
-                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE,
-                                   external.regressors = as.matrix(cbind(x$backward, abs(x$per_asset_return)))),   
-                                          distribution.model = 'sstd')
-base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
-
-"Backwardation and Absolute Value of Percent Asset Return"
-base.1.fit@fit[['robust.matcoef']]
-infocriteria(base.1.fit)
-
-
-```
-
-
--------------
-!!!!
 Now lets start over and fit an ARMA process to the residuals. I utilize the Box- Jenkins procedure to fit the model. A good specification would have no autocorrelation in the residuals, but autocorrelation in the squared residuals.
 
-The autocorrelation of the residuals is significant, but dies off very slowly. With a max lag of 10, an ARMA(0,1) model has the characteristics we are searching for. 
+The autocorrelation of the residuals is significant, but dies off very slowly. With a max lag of 10, an ARMA(2,3) is the closest we can get to what we want, but it is not perfect at the 5\% level. (3,3) prefers slightly better but the ar3 is not sig. 
+
 ```{r soyb_arma1, echo=FALSE}
 checkresiduals(x$etf_asset_error)
 
-a <- arima(x$etf_asset_error, c(0,0,1))
+a <- arima(x$etf_asset_error, c(2,0,3))
 Box.test(a$residuals, lag = 10, type = 'Ljung-Box')
 Box.test(a$residuals^2, lag = 10, type = 'Ljung-Box')
 ```
 
-Now let's start over from the beginning with out base GARCH model and see if we should include the unconditional mean. Immediately huge improvements in model fit by including an MA process. The fit does not improve when including the unconditional mean, so I will leave it out. 
+Now let's start over from the beginning with out base GARCH model and see if we should include the unconditional mean. The results are challening as the AIC does improve, but mu is very insignificant. I will leave it out. 
 
 ```{r soyb_arma2, echo=FALSE}
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
-                          mean.model = list(armaOrder = c(0,1), include.mean = FALSE))
+                          mean.model = list(armaOrder = c(2,3), include.mean = FALSE))
 base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
 
 "No Unconditional Mean Robust Coefficients"
@@ -817,7 +568,7 @@ base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
-                          mean.model = list(armaOrder = c(0,1), include.mean = TRUE))
+                          mean.model = list(armaOrder = c(2,3), include.mean = TRUE))
 base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
 
 "Including Unconditional Mean Robust Coefficients"
@@ -826,11 +577,11 @@ infocriteria(base.1.fit)
 
 ```
 
-As in the non ARMA specification, the archm coefficient is not statistically significant and its inclusion does not help model fit. 
+Including the ARCHM process leads to model fit problems. 
 
 ```{r soyb_arma3, echo = FALSE}
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
-                          mean.model = list(armaOrder = c(0,1), include.mean = FALSE))
+                          mean.model = list(armaOrder = c(2,3), include.mean = FALSE))
 base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
 
 "No ARCH in Mean Robust Coefficients"
@@ -839,7 +590,7 @@ infocriteria(base.1.fit)
 
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
-                          mean.model = list(armaOrder = c(0,1), include.mean = FALSE, 
+                          mean.model = list(armaOrder = c(2,3), include.mean = FALSE, 
                                             archm = TRUE))
 base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
 
@@ -848,11 +599,11 @@ base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
 ```
 
-Now lets compare normal distribution with student-t. Again we find student-t distribution to have a much better fit. 
+Now lets compare normal distribution with student-t. Again we find student-t distribution to have a **much** better fit. 
 
 ```{r soyb_arma4, echo=FALSE}
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
-                          mean.model = list(armaOrder = c(0,1), include.mean = FALSE),
+                          mean.model = list(armaOrder = c(2,3), include.mean = FALSE),
                           distribution.model = 'norm')
 base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
 
@@ -861,8 +612,8 @@ base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
-                          mean.model = list(armaOrder = c(0,1), include.mean = FALSE),
-                          distribution.model = 'sstd')
+                          mean.model = list(armaOrder = c(2,3), include.mean = FALSE),
+                          distribution.model = 'std')
 base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
 
 "Student t Distribution Robust Coefficients"
@@ -870,13 +621,13 @@ base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
 ```
 
-As we saw with the GARCH process with an ARMA process, asymmetric model specifications do not improve model fit
+Now we fit asymmetric models. Unlike CORN, asymmetric models improve model fit. 
 
 
 ```{r soyb_arma5, echo=FALSE}
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
-                          mean.model = list(armaOrder = c(0,1), include.mean = FALSE),
-                          distribution.model = 'sstd')
+                          mean.model = list(armaOrder = c(2,3), include.mean = FALSE),
+                          distribution.model = 'std')
 base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
 
 "Standard GARCH Robust Coefficients"
@@ -886,8 +637,8 @@ infocriteria(base.1.fit)
 
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "apARCH"),
-                          mean.model = list(armaOrder = c(0,1), include.mean = FALSE),
-                          distribution.model = 'sstd')
+                          mean.model = list(armaOrder = c(2,3), include.mean = FALSE),
+                          distribution.model = 'std')
 base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
 
 "Asymmetric Power GARCH (apGARCH) Robust Coefficients"
@@ -895,8 +646,8 @@ base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "gjrGARCH"),
-                          mean.model = list(armaOrder = c(0,1), include.mean = FALSE),
-                          distribution.model = 'sstd')
+                          mean.model = list(armaOrder = c(2,3), include.mean = FALSE),
+                          distribution.model = 'std')
 base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
 
 "GJR GARCH Robust Coefficients"
@@ -904,8 +655,8 @@ base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "eGARCH"),
-                          mean.model = list(armaOrder = c(0,1), include.mean = FALSE),
-                          distribution.model = 'sstd')
+                          mean.model = list(armaOrder = c(2,3), include.mean = FALSE),
+                          distribution.model = 'std')
 base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
 
 "Exponential Power GARCH Robust Coefficients"
@@ -913,43 +664,279 @@ base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
 
 ```
-I will not test three specifications of external variables: one with only Absolute Percent Asset Returns, one with only Backwardation, and one with both. We find exactly what we found for the non ARMA specification: asset return is not significant by itself, backwardation is, and together both are. The best model in terms of AIC includes both. 
 
-```{r soyb_arma6, echo = FALSE}
+
+### SOYB Summary
+As with CORN, it is likely best to not include ARCH in mean or the unconditional mean in this model specification. Model fit was greatly improved by fitting an ARMA(2,3) process and further greatly improved by using a student-t distribution. Unlike CORN, some of the Asymmetric specifications did have a better fit. 
+
+
+\newpage
+
+## Wheat
+
+```{r weat_setup, echo = FALSE}
+x <- WEAT
+```
+
+Lets begin by looking at the OLS results. We fail to reject both of the null hypothesis of $\alpha = 0$. $\beta = 1$
+
+```{r weat_ols, echo = FALSE}
+ols <- lm(x$per_ETF_return ~ x$per_asset_return)
+summary(ols)
+x$etf_asset_error <- ols$residuals
+```
+
+There is evidence of ARCH effects in the residuals based off the Ljung-Box Test.
+
+```{r weat_arch, echo = FALSE}
+tsdisplay(ols$residuals)
+
+tsdisplay(ols$residuals^2)
+
+Box.test(ols$residuals^2, type = "Ljung-Box")
+```
+
+Moving onto GARCH, again including the unconditional mean is unimformative.
+
+```{r weat_1, echo = FALSE}
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
-                          mean.model = list(armaOrder = c(0,1), include.mean = FALSE,
-                                external.regressors = as.matrix(abs(x$per_asset_return))),
-                          distribution.model = 'sstd')
+                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE))
 base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
 
-"Absolute Percentage Asset Returns Robust Coefficients"
+"No unconditional mean Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
-                          mean.model = list(armaOrder = c(0,1), include.mean = FALSE,
-                                external.regressors = as.matrix(x$backward)),
-                          distribution.model = 'sstd')
+                          mean.model = list(armaOrder = c(0,0), include.mean = TRUE))
 base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
 
-"Backwardation Robust Coefficients"
+"Including Unconditional Mean Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+```
+
+The ARCH in mean coefficient is not statistically significant at the 5% level, and including it does not help model fit. For whatever reason, if I try and not include the unconditional mean, the model will not run.
+
+```{r weat_3, echo = FALSE}
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(0,0), include.mean = TRUE, 
+                                            archm = TRUE ))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"ARCH in Mean Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+
+```
+
+As with CORN, lets compare different asymmetric specifications, still assuming a normal distribution. I find not reason to move to an asymmetric model.
+
+```{r weat_4, echo = FALSE}
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"Standard GARCH Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
 
 
-base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
-                          mean.model = list(armaOrder = c(0,1), include.mean = FALSE,
-                          external.regressors = as.matrix(cbind(abs(x$per_asset_return), x$backward))),
-                          distribution.model = 'sstd')
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "apARCH"),
+                          mean.model = list(armaOrder = c(0,0), include.mean = TRUE, 
+                                            archm = FALSE ))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+"Asymmetric Power ARCH (apARCH) Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'gjrGARCH'),
+                          mean.model = list(armaOrder = c(0,0), include.mean = TRUE, 
+                                            archm = FALSE ))
 base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
 
-"Absolute Asset returns (mxreg1) and Backwardation (mxreg2) Robust Coefficients"
+"GJR ARCH Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'eGARCH'),
+                          mean.model = list(armaOrder = c(0,0), include.mean = TRUE, 
+                                            archm = FALSE ))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+"eARCH Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+
+```
+
+Again, I will replace the normal distribution with the student t distribution. Model fit improves slightly, certainly not as much as the other ETFs
+
+```{r weat_5, echo=FALSE}
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'sGARCH'),
+                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE),                                                         distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"Standard GARCH Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "apARCH"),
+                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE, 
+                                            archm = FALSE ), distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+"Asymmetric Power ARCH (apARCH) Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "gjrGARCH"),
+                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE, 
+                                            archm = FALSE ), distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"GJR ARCH Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "eGARCH"),
+                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE, 
+                                            archm = FALSE ), distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+"eARCH Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
 
 ```
 
 
-### SOYB Summary
+Now lets start over and fit an ARMA process to the residuals. I utilize the Box- Jenkins procedure to fit the model. A good specification would have no autocorrelation in the residuals, but autocorrelation in the squared residuals.
 
-We find that include ARCH in mean or the unconditional mean does not improve model fit. The assumed distribution is important: the student t distribution is a much better fit than the normal. Regardless of distribution, asymmetric model specifications do not improve model fit. Fitting an ARMA process (in this case an MA1 process) greatly improves model fit. Regardless of ARMA process, the best fitting model includes both the absolute value of the asset return and a dummy variable for backwardation in the mean equation. 
+(1,5) is the best model specification
+
+
+```{r weat_arma1, echo=FALSE}
+checkresiduals(x$etf_asset_error)
+
+a <- arima(x$etf_asset_error, c(1,0,5))
+Box.test(a$residuals, lag = 10, type = 'Ljung-Box')
+Box.test(a$residuals^2, lag = 10, type = 'Ljung-Box')
+```
+
+Now let's start over from the beginning with out base GARCH model and see if we should include the unconditional mean. The results are challening as the AIC does improve, but mu is very insignificant. I will leave it out. 
+
+```{r weat_arma2, echo=FALSE}
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(1,5), include.mean = FALSE))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"No Unconditional Mean Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(1,5), include.mean = TRUE))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"Including Unconditional Mean Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+
+```
+
+Including the ARCHM process leads to model fit problems. 
+
+```{r weat_arma3, echo = FALSE}
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(1,5), include.mean = FALSE))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"No ARCH in Mean Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(1,5), include.mean = FALSE, 
+                                            archm = TRUE))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"ARCH in Mean Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+```
+
+Now lets compare normal distribution with student-t. Again we find student-t distribution to have a somewhat better fit. 
+
+```{r weat_arma4, echo=FALSE}
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(1,5), include.mean = FALSE),
+                          distribution.model = 'norm')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"Normal Distribution Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(1,5), include.mean = FALSE),
+                          distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"Student t Distribution Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+```
+
+Now we fit asymmetric models. Like CORN and unlike SOYB, asymmetric models do not help model fit
+
+
+```{r weat_arma5, echo=FALSE}
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(1,5), include.mean = FALSE),
+                          distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"Standard GARCH Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+
+
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "apARCH"),
+                          mean.model = list(armaOrder = c(1,5), include.mean = FALSE),
+                          distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"Asymmetric Power GARCH (apGARCH) Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "gjrGARCH"),
+                          mean.model = list(armaOrder = c(1,5), include.mean = FALSE),
+                          distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"GJR GARCH Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "eGARCH"),
+                          mean.model = list(armaOrder = c(1,5), include.mean = FALSE),
+                          distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"Exponential Power GARCH Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+
+```
+
+
+### WEAT Summary
+As with CORN and SOYB, it is likely best to not include ARCH in mean or the unconditional mean in this model specification as it does not improve model fit or produce significant coefficients. Fitting an ARMA (1,5) process also improved fit significantly.  Changing from a normal distribution to a student t distribution *slightly* improved model fit. Asymmetric models did not have better fit. 
