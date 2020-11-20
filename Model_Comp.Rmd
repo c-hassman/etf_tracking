@@ -36,7 +36,7 @@ CORN <- CORN[1:(length(CORN)-2)]
 SOYB <- SOYB[1:(length(SOYB)-1)]
 WEAT <- WEAT[1:(length(WEAT)-2)]
 # USO Good
-UGA <- UGA[1:(length(UGA)-1)]
+UGA <- UGA[1:(length(UGA)-2)]
 
 
 
@@ -97,6 +97,14 @@ UGA <- na.omit(UGA)
 UGA <- UGA[!(UGA$ROLL == 1),]
 UGA.xts <- xts(UGA[,-1], order.by = UGA$DATE)
 
+
+#-Create Dataframe to hold results
+models <- c("Simple", "Unconditional Mean", "ARCH-M", "ApARCH", "GJR ARCH", "eARCH", "t-dist Simple", "t-dist apARCH", "t-dist GJR ARCH", "t-dist eARCH")
+
+
+base.results <- data.frame(models)
+arma.results <- data.frame(models)
+
 ```
 
 # Introduction
@@ -134,6 +142,16 @@ As with CORN, it is likely best to not include ARCH in mean or the unconditional
 As with CORN and SOYB, it is likely best to not include ARCH in mean or the unconditional mean in this model specification as it does not improve model fit or produce significant coefficients. Fitting an ARMA (1,5) process also improved fit significantly. Changing from a normal distribution to a student t distribution *slightly* improved model fit. Asymmetric models did not have better fit. 
 
 \newpage
+
+**USO Summary**
+
+Again I determine to not include ARCH in mean or the unconditional mean in this model specification as it does not improve model fit or produce significant coefficients. A Student-t distribution fits better than a normal distribution. Asymmetric models are not favorable for normal distributions but *are* preferred under a student-t distributions. Fitting an (3,1) ARMA process improves model fit significant. The best fitting model is an Asymmetric Power ARCH with a student t distribution and an ARCH in mean. 
+
+**UGA Summary**
+
+UGA results are very similiar to USO both with and without an ARMA process. Asymmetric models performed better, student t distributions have a better fit, and even ARCH-M produces significant coefficients *but* does not produce a better fit as in USO. The best fit is has a (2,1) ARMA process, is a student t distribution, and is an Exponential Power GARCH. 
+
+\newpage
 ## Corn
 
 ```{r corn_setup, echo = FALSE}
@@ -167,6 +185,10 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
 
+corn.aic <- c(infocriteria(base.1.fit)[1])
+
+
+
 ```
 
 Including the unconditional mean does not improve model fit. 
@@ -179,6 +201,9 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "Including Unconditional Mean Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+
+corn.aic <- append(corn.aic, infocriteria(base.1.fit)[1])
+
 ```
 We can now investigate an ARCH in means. The coefficient estimate for archm is statistically insignificant and inclusion does not improve model fit. 
 
@@ -192,6 +217,8 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+
+corn.aic <- append(corn.aic, infocriteria(base.1.fit)[1])
 
 ```
 
@@ -207,6 +234,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
 
+corn.aic <- append(corn.aic, infocriteria(base.1.fit)[1])
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'gjrGARCH'),
                           mean.model = list(armaOrder = c(0,0), include.mean = TRUE, 
@@ -216,7 +244,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "GJR ARCH Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
-
+corn.aic <- append(corn.aic, infocriteria(base.1.fit)[1])
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'eGARCH'),
                           mean.model = list(armaOrder = c(0,0), include.mean = TRUE, 
@@ -225,6 +253,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "eARCH Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+corn.aic <- append(corn.aic, infocriteria(base.1.fit)[1])
 
 ```
 
@@ -238,7 +267,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "Base Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
-
+corn.aic <- append(corn.aic, infocriteria(base.1.fit)[1])
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "apARCH"),
                           mean.model = list(armaOrder = c(0,0), include.mean = TRUE, 
@@ -247,7 +276,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "Asymmetric Power ARCH (apARCH) Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
-
+corn.aic <- append(corn.aic, infocriteria(base.1.fit)[1])
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "gjrGARCH"),
                           mean.model = list(armaOrder = c(0,0), include.mean = TRUE, 
@@ -257,7 +286,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "GJR ARCH Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
-
+corn.aic <- append(corn.aic, infocriteria(base.1.fit)[1])
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "eGARCH"),
                           mean.model = list(armaOrder = c(0,0), include.mean = TRUE, 
@@ -266,6 +295,9 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "eARCH Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+corn.aic <- append(corn.aic, infocriteria(base.1.fit)[1])
+
+base.results$CORN <- corn.aic
 
 ```
 
@@ -296,6 +328,8 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
 
+corn.arma.aic <- infocriteria(base.1.fit)[1]
+
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
                           mean.model = list(armaOrder = c(0,1), include.mean = TRUE))
 base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
@@ -303,6 +337,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "Including Unconditional Mean Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+corn.arma.aic <- append(corn.arma.aic, infocriteria(base.1.fit)[1])
 ```
 
 As in the non ARMA specification, the archm coefficient is not statistically significant and its inclusion does not help model fit. 
@@ -325,9 +360,11 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "ARCH in Mean Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+corn.arma.aic <- append(corn.arma.aic, infocriteria(base.1.fit)[1])
 ```
 
 Now lets compare normal distribution with student-t. Again we find student-t distribution to have a much better fit. 
+
 
 ```{r corn_arma4, echo=FALSE}
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
@@ -348,6 +385,30 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
 ```
+```{r corn_base_run,echo=FALSE}
+
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "apARCH"),
+                          mean.model = list(armaOrder = c(0,1), include.mean = FALSE))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+corn.arma.aic <- append(corn.arma.aic, infocriteria(base.1.fit)[1])
+
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "gjrGARCH"),
+                          mean.model = list(armaOrder = c(0,1), include.mean = FALSE))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+corn.arma.aic <- append(corn.arma.aic, infocriteria(base.1.fit)[1])
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "eGARCH"),
+                          mean.model = list(armaOrder = c(0,1), include.mean = FALSE))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+corn.arma.aic <- append(corn.arma.aic, infocriteria(base.1.fit)[1])
+
+```
+
 
 As we saw with the GARCH process with an ARMA process, asymmetric model specifications do not improve model fit
 
@@ -361,7 +422,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "Standard GARCH Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
-
+corn.arma.aic <- append(corn.arma.aic, infocriteria(base.1.fit)[1])
 
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "apARCH"),
@@ -372,6 +433,8 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "Asymmetric Power GARCH (apGARCH) Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+corn.arma.aic <- append(corn.arma.aic, infocriteria(base.1.fit)[1])
+
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "gjrGARCH"),
                           mean.model = list(armaOrder = c(0,1), include.mean = FALSE),
@@ -381,6 +444,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "GJR GARCH Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+corn.arma.aic <- append(corn.arma.aic, infocriteria(base.1.fit)[1])
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "eGARCH"),
                           mean.model = list(armaOrder = c(0,1), include.mean = FALSE),
@@ -390,6 +454,12 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "Exponential Power GARCH Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+corn.arma.aic <- append(corn.arma.aic, infocriteria(base.1.fit)[1])
+
+arma.results$'CORN(0,1)' <- corn.arma.aic
+
+base.results
+arma.results
 
 ```
 
@@ -435,6 +505,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "No unconditional mean Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+soyb.aic <- infocriteria(base.1.fit)[1]
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
                           mean.model = list(armaOrder = c(0,0), include.mean = TRUE))
@@ -443,6 +514,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "Including Unconditional Mean Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+soyb.aic <- append(soyb.aic, infocriteria(base.1.fit)[1])
 ```
 
 The ARCH in mean coefficient is not statistically significant at the 5% level, and including it does not help model fit. 
@@ -457,6 +529,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "ARCH in Mean Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+soyb.aic <- append(soyb.aic, infocriteria(base.1.fit)[1])
 
 ```
 
@@ -480,7 +553,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "Asymmetric Power ARCH (apARCH) Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
-
+soyb.aic <- append(soyb.aic, infocriteria(base.1.fit)[1])
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'gjrGARCH'),
                           mean.model = list(armaOrder = c(0,0), include.mean = TRUE, 
@@ -490,7 +563,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "GJR ARCH Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
-
+soyb.aic <- append(soyb.aic, infocriteria(base.1.fit)[1])
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'eGARCH'),
                           mean.model = list(armaOrder = c(0,0), include.mean = TRUE, 
@@ -499,7 +572,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "eARCH Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
-
+soyb.aic <- append(soyb.aic, infocriteria(base.1.fit)[1])
 ```
 
 Again, I will replace the normal distribution with the student t distribution. Model fit improves significantly. Notably, an two asymmetric models: the asymmetric power ARCH and GJR ARCH have better fits than the standard model. 
@@ -512,6 +585,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "Standard GARCH Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+soyb.aic <- append(soyb.aic, infocriteria(base.1.fit)[1])
 
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "apARCH"),
@@ -521,7 +595,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "Asymmetric Power ARCH (apARCH) Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
-
+soyb.aic <- append(soyb.aic, infocriteria(base.1.fit)[1])
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "gjrGARCH"),
                           mean.model = list(armaOrder = c(0,0), include.mean = FALSE, 
@@ -531,6 +605,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "GJR ARCH Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+soyb.aic <- append(soyb.aic, infocriteria(base.1.fit)[1])
 
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "eGARCH"),
@@ -540,7 +615,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "eARCH Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
-
+soyb.aic <- append(soyb.aic, infocriteria(base.1.fit)[1])
 ```
 
 
@@ -566,6 +641,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "No Unconditional Mean Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+soyb.arma.aic <- infocriteria(base.1.fit)[1]
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
                           mean.model = list(armaOrder = c(2,3), include.mean = TRUE))
@@ -574,6 +650,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "Including Unconditional Mean Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+soyb.arma.aic <- append(soyb.arma.aic, infocriteria(base.1.fit)[1])
 
 ```
 
@@ -597,7 +674,32 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "ARCH in Mean Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+soyb.arma.aic <- append(soyb.arma.aic, NA)
 ```
+```{r soyb_mute, echo = TRUE}
+
+
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "apARCH"),
+                        mean.model = list(armaOrder = c(2,3), include.mean = FALSE))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+soyb.arma.aic <- append(soyb.arma.aic, infocriteria(base.1.fit)[1])
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "gjrGARCH"),
+                          mean.model = list(armaOrder = c(2,3), include.mean = FALSE))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+soyb.arma.aic <- append(soyb.arma.aic, infocriteria(base.1.fit)[1])
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "eGARCH"),
+                          mean.model = list(armaOrder = c(2,3), include.mean = FALSE))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+soyb.arma.aic <- append(soyb.arma.aic, infocriteria(base.1.fit)[1])
+
+```
+
 
 Now lets compare normal distribution with student-t. Again we find student-t distribution to have a **much** better fit. 
 
@@ -619,6 +721,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "Student t Distribution Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+
 ```
 
 Now we fit asymmetric models. Unlike CORN, asymmetric models improve model fit. 
@@ -633,7 +736,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "Standard GARCH Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
-
+soyb.arma.aic <- append(soyb.arma.aic, infocriteria(base.1.fit)[1])
 
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "apARCH"),
@@ -644,6 +747,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "Asymmetric Power GARCH (apGARCH) Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+soyb.arma.aic <- append(soyb.arma.aic, infocriteria(base.1.fit)[1])
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "gjrGARCH"),
                           mean.model = list(armaOrder = c(2,3), include.mean = FALSE),
@@ -653,6 +757,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "GJR GARCH Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+soyb.arma.aic <- append(soyb.arma.aic, infocriteria(base.1.fit)[1])
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "eGARCH"),
                           mean.model = list(armaOrder = c(2,3), include.mean = FALSE),
@@ -662,6 +767,11 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "Exponential Power GARCH Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+soyb.arma.aic <- append(soyb.arma.aic, infocriteria(base.1.fit)[1])
+
+base.results$SOYB <- soyb.aic
+arma.results$'SOYB(2,3)' <- soyb.arma.aic
+
 
 ```
 
@@ -706,6 +816,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "No unconditional mean Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+weat.aic <- infocriteria(base.1.fit)[1]
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
                           mean.model = list(armaOrder = c(0,0), include.mean = TRUE))
@@ -714,6 +825,8 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "Including Unconditional Mean Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+weat.aic <- append(weat.aic, infocriteria(base.1.fit)[1])
+
 ```
 
 The ARCH in mean coefficient is not statistically significant at the 5% level, and including it does not help model fit. For whatever reason, if I try and not include the unconditional mean, the model will not run.
@@ -728,6 +841,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "ARCH in Mean Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+weat.aic <- append(weat.aic, infocriteria(base.1.fit)[1])
 
 ```
 
@@ -751,6 +865,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "Asymmetric Power ARCH (apARCH) Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+weat.aic <- append(weat.aic, infocriteria(base.1.fit)[1])
 
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'gjrGARCH'),
@@ -761,6 +876,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "GJR ARCH Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+weat.aic <- append(weat.aic, infocriteria(base.1.fit)[1])
 
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'eGARCH'),
@@ -770,8 +886,10 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "eARCH Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+weat.aic <- append(weat.aic, infocriteria(base.1.fit)[1])
 
 ```
+
 
 Again, I will replace the normal distribution with the student t distribution. Model fit improves slightly, certainly not as much as the other ETFs
 
@@ -783,7 +901,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "Standard GARCH Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
-
+weat.aic <- append(weat.aic, infocriteria(base.1.fit)[1])
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "apARCH"),
                           mean.model = list(armaOrder = c(0,0), include.mean = FALSE, 
@@ -792,7 +910,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "Asymmetric Power ARCH (apARCH) Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
-
+weat.aic <- append(weat.aic, infocriteria(base.1.fit)[1])
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "gjrGARCH"),
                           mean.model = list(armaOrder = c(0,0), include.mean = FALSE, 
@@ -802,7 +920,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "GJR ARCH Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
-
+weat.aic <- append(weat.aic, infocriteria(base.1.fit)[1])
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "eGARCH"),
                           mean.model = list(armaOrder = c(0,0), include.mean = FALSE, 
@@ -811,7 +929,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "eARCH Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
-
+weat.aic <- append(weat.aic, infocriteria(base.1.fit)[1])
 ```
 
 
@@ -831,6 +949,8 @@ Box.test(a$residuals^2, lag = 10, type = 'Ljung-Box')
 Now let's start over from the beginning with out base GARCH model and see if we should include the unconditional mean. The results are challening as the AIC does improve, but mu is very insignificant. I will leave it out. 
 
 ```{r weat_arma2, echo=FALSE}
+weat.arma.aic <-
+
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
                           mean.model = list(armaOrder = c(1,5), include.mean = FALSE))
 base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
@@ -838,6 +958,8 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "No Unconditional Mean Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+weat.arma.aic <- infocriteria(base.1.fit)[1]
+
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
                           mean.model = list(armaOrder = c(1,5), include.mean = TRUE))
@@ -846,6 +968,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "Including Unconditional Mean Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+weat.arma.aic <- append(weat.arma.aic, infocriteria(base.1.fit)[1])
 
 ```
 
@@ -869,9 +992,36 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "ARCH in Mean Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+weat.arma.aic <- append(weat.arma.aic, NA)
 ```
 
 Now lets compare normal distribution with student-t. Again we find student-t distribution to have a somewhat better fit. 
+
+```{r weat_mute, echo=FALSE}
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "apARCH"),
+                          mean.model = list(armaOrder = c(1,5), include.mean = FALSE),
+                          distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+weat.arma.aic <- append(weat.arma.aic, infocriteria(base.1.fit)[1])
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "gjrGARCH"),
+                          mean.model = list(armaOrder = c(1,5), include.mean = FALSE),
+                          distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+weat.arma.aic <- append(weat.arma.aic, infocriteria(base.1.fit)[1])
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "eGARCH"),
+                          mean.model = list(armaOrder = c(1,5), include.mean = FALSE),
+                          distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+weat.arma.aic <- append(weat.arma.aic, infocriteria(base.1.fit)[1])
+
+```
+
 
 ```{r weat_arma4, echo=FALSE}
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
@@ -891,6 +1041,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "Student t Distribution Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+
 ```
 
 Now we fit asymmetric models. Like CORN and unlike SOYB, asymmetric models do not help model fit
@@ -905,7 +1056,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "Standard GARCH Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
-
+weat.arma.aic <- append(weat.arma.aic, infocriteria(base.1.fit)[1])
 
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "apARCH"),
@@ -916,6 +1067,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "Asymmetric Power GARCH (apGARCH) Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+weat.arma.aic <- append(weat.arma.aic, infocriteria(base.1.fit)[1])
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "gjrGARCH"),
                           mean.model = list(armaOrder = c(1,5), include.mean = FALSE),
@@ -925,6 +1077,7 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "GJR GARCH Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+weat.arma.aic <- append(weat.arma.aic, infocriteria(base.1.fit)[1])
 
 base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "eGARCH"),
                           mean.model = list(armaOrder = c(1,5), include.mean = FALSE),
@@ -934,9 +1087,689 @@ base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = '
 "Exponential Power GARCH Robust Coefficients"
 base.1.fit@fit[['robust.matcoef']]
 infocriteria(base.1.fit)
+weat.arma.aic <- append(weat.arma.aic, infocriteria(base.1.fit)[1])
 
+
+base.results$WEAT <- weat.aic
+arma.results$'WEAT(1,5)' <- weat.arma.aic
 ```
 
 
 ### WEAT Summary
 As with CORN and SOYB, it is likely best to not include ARCH in mean or the unconditional mean in this model specification as it does not improve model fit or produce significant coefficients. Fitting an ARMA (1,5) process also improved fit significantly.  Changing from a normal distribution to a student t distribution *slightly* improved model fit. Asymmetric models did not have better fit. 
+
+
+\newpage
+
+## Crude Oil (USO)
+
+```{r uso_setup, echo = FALSE}
+x <- USO
+```
+
+Lets begin by looking at the OLS results. We fail to reject $\alpha = 0$ but reject the second hypothesis of $\beta = 1$ by quite a bit. The $\beta$ estimate of 0.9 implies that severe disunity.
+
+```{r uso_ols, echo = FALSE}
+ols <- lm(x$per_ETF_return ~ x$per_asset_return)
+summary(ols)
+x$etf_asset_error <- ols$residuals
+```
+
+There is evidence of ARCH effects in the residuals based off the Ljung-Box Test.
+
+```{r uso_arch, echo = FALSE}
+tsdisplay(ols$residuals)
+
+tsdisplay(ols$residuals^2)
+
+Box.test(ols$residuals^2, type = "Ljung-Box")
+```
+
+Moving onto GARCH, again including the unconditional mean is unimformative.
+
+```{r uso_1, echo = FALSE}
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"No unconditional mean Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+
+uso.aic <- infocriteria(base.1.fit)[1]
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(0,0), include.mean = TRUE))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"Including Unconditional Mean Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uso.aic <- append(uso.aic, infocriteria(base.1.fit)[1])
+
+
+```
+
+The ARCH in mean coefficient is not statistically significant at the 5% level, and including it does not help model fit. 
+
+```{r uso_3, echo = FALSE}
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(0,0), include.mean = TRUE, 
+                                            archm = TRUE ))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"ARCH in Mean Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uso.aic <- append(uso.aic, infocriteria(base.1.fit)[1])
+
+```
+
+I find not reason to move to an asymmetric model.
+
+```{r uso_4, echo = FALSE}
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"Standard GARCH Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "apARCH"),
+                          mean.model = list(armaOrder = c(0,0), include.mean = TRUE, 
+                                            archm = FALSE ))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+"Asymmetric Power ARCH (apARCH) Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uso.aic <- append(uso.aic, infocriteria(base.1.fit)[1])
+
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'gjrGARCH'),
+                          mean.model = list(armaOrder = c(0,0), include.mean = TRUE, 
+                                            archm = FALSE ))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"GJR ARCH Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uso.aic <- append(uso.aic, infocriteria(base.1.fit)[1])
+
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'eGARCH'),
+                          mean.model = list(armaOrder = c(0,0), include.mean = TRUE, 
+                                            archm = FALSE ))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+"eARCH Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uso.aic <- append(uso.aic, infocriteria(base.1.fit)[1])
+
+```
+
+Again, I will replace the normal distribution with the student t distribution. Model fit improves and now the asymmetric models fit better. 
+
+```{r uso_5, echo=FALSE}
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'sGARCH'),
+                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE),                                                         distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"Standard GARCH Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uso.aic <- append(uso.aic, infocriteria(base.1.fit)[1])
+
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "apARCH"),
+                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE, 
+                                            archm = FALSE ), distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+"Asymmetric Power ARCH (apARCH) Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uso.aic <- append(uso.aic, infocriteria(base.1.fit)[1])
+
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "gjrGARCH"),
+                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE, 
+                                            archm = FALSE ), distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"GJR ARCH Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uso.aic <- append(uso.aic, infocriteria(base.1.fit)[1])
+
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "eGARCH"),
+                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE, 
+                                            archm = FALSE ), distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+"eARCH Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uso.aic <- append(uso.aic, infocriteria(base.1.fit)[1])
+
+```
+
+
+Now lets start over and fit an ARMA process to the residuals. I utilize the Box- Jenkins procedure to fit the model. A good specification would have no autocorrelation in the residuals, but autocorrelation in the squared residuals.
+
+(3,2) is the best model specification
+
+
+```{r uso_arma1, echo=FALSE}
+checkresiduals(x$etf_asset_error)
+
+a <- arima(x$etf_asset_error, c(3,0,2))
+Box.test(a$residuals, lag = 10, type = 'Ljung-Box')
+Box.test(a$residuals^2, lag = 10, type = 'Ljung-Box')
+```
+
+Now let's start over from the beginning with out base GARCH model and see if we should include the unconditional mean. Mu is not significant and does not improve model fit. 
+
+```{r uso_arma2, echo=FALSE}
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(3,2), include.mean = FALSE))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"No Unconditional Mean Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uso.arma.aic <- infocriteria(base.1.fit)[1]
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(3,2), include.mean = TRUE))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"Including Unconditional Mean Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uso.arma.aic <- append(uso.arma.aic, infocriteria(base.1.fit)[1])
+
+```
+
+Including the ARCHM process actually produces a significant coefficient and improves fit! I will come back to this, but for now I leave it out. 
+
+```{r uso_arma3, echo = FALSE}
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(3,2), include.mean = FALSE))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"No ARCH in Mean Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(3,2), include.mean = FALSE, 
+                                            archm = TRUE))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"ARCH in Mean Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uso.arma.aic <- append(uso.arma.aic, infocriteria(base.1.fit)[1])
+```
+```{r uso_mute, echo = FALSE}
+
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "apARCH"),
+                          mean.model = list(armaOrder = c(3,2), include.mean = FALSE),
+                          distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+uso.arma.aic <- append(uso.arma.aic, infocriteria(base.1.fit)[1])
+
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "gjrGARCH"),
+                          mean.model = list(armaOrder = c(3,2), include.mean = FALSE),
+                          distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+uso.arma.aic <- append(uso.arma.aic, infocriteria(base.1.fit)[1])
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "eGARCH"),
+                          mean.model = list(armaOrder = c(3,2), include.mean = FALSE),
+                          distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+uso.arma.aic <- append(uso.arma.aic, infocriteria(base.1.fit)[1])
+```
+
+Now lets compare normal distribution with student-t. Again we find student-t distribution to have a somewhat better fit. 
+
+```{r uso_arma4, echo=FALSE}
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(3,2), include.mean = FALSE),
+                          distribution.model = 'norm')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"Normal Distribution Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(3,2), include.mean = FALSE),
+                          distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"Student t Distribution Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+```
+
+Now we fit asymmetric models. Just like the models with an ARMA process, an Asymmetric model has a better fit. The very best model fit based off AIC is Asymmetric Power ARCH (same as WEAT I think)
+
+
+```{r uso_arma5, echo=FALSE}
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(3,2), include.mean = FALSE),
+                          distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"Standard GARCH Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uso.arma.aic <- append(uso.arma.aic, infocriteria(base.1.fit)[1])
+
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "apARCH"),
+                          mean.model = list(armaOrder = c(3,2), include.mean = FALSE),
+                          distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"Asymmetric Power GARCH (apGARCH) Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uso.arma.aic <- append(uso.arma.aic, infocriteria(base.1.fit)[1])
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "gjrGARCH"),
+                          mean.model = list(armaOrder = c(3,2), include.mean = FALSE),
+                          distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"GJR GARCH Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uso.arma.aic <- append(uso.arma.aic, infocriteria(base.1.fit)[1])
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "eGARCH"),
+                          mean.model = list(armaOrder = c(3,2), include.mean = FALSE),
+                          distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"Exponential Power GARCH Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uso.arma.aic <- append(uso.arma.aic, infocriteria(base.1.fit)[1])
+
+```
+
+
+Now I want to throw back in ARCH in mean, as we saw that improve model fit. 
+
+```{r uso_final, echo = FALSE}
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "apARCH"),
+                          mean.model = list(armaOrder = c(3,2), include.mean = FALSE, 
+                                            archm = TRUE),
+                          distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"Asymmetric Power GARCH (apGARCH) + ARCHM Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+
+base.results$USO <- uso.aic
+arma.results$'USO(3,1)' <- uso.arma.aic
+```
+
+
+### USO Summary
+Again I determine to not include ARCH in mean or the unconditional mean in this model specification as it does not improve model fit or produce significant coefficients. A Student-t distribution fits better than a normal distribution. Asymmetric models are not favorable for normal distributions but *are* preferred under a student-t distributions. Fitting an (3,1) ARMA process improves model fit significant. The best fitting model is an Asymmetric Power ARCH with a student t distribution and an ARCH in mean. 
+
+
+
+\newpage
+
+## US Gasoline (UGA)
+
+```{r uga_setup, echo = FALSE}
+x <- UGA
+```
+
+Lets begin by looking at the OLS results. We fail to reject the null hypothesis of $\alpha = 0$ but reject the hypothesis $\beta = 1$. Just like USO, the $\beta$ coefficient is significantly below 1, inidcating severe disunity. 
+
+```{r uga_ols, echo = FALSE}
+ols <- lm(x$per_ETF_return ~ x$per_asset_return)
+summary(ols)
+x$etf_asset_error <- ols$residuals
+```
+
+There is evidence of ARCH effects in the residuals based off the Ljung-Box Test.
+
+```{r uga_arch, echo = FALSE}
+tsdisplay(ols$residuals)
+
+tsdisplay(ols$residuals^2)
+
+Box.test(ols$residuals^2, type = "Ljung-Box")
+```
+
+Moving onto GARCH, again including the unconditional mean is unimformative.
+
+```{r uga_1, echo = FALSE}
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"No unconditional mean Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uga.aic <- infocriteria(base.1.fit)[1]
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(0,0), include.mean = TRUE))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"Including Unconditional Mean Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uga.aic <- append(uga.aic, infocriteria(base.1.fit)[1])
+```
+
+The ARCH in mean coefficient is not statistically significant at the 5% level, and including it does not help model fit. 
+
+```{r uga_3, echo = FALSE}
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(0,0), include.mean = TRUE, 
+                                            archm = TRUE ))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"ARCH in Mean Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uga.aic <- append(uga.aic, infocriteria(base.1.fit)[1])
+
+```
+
+No reason to move to an asymmetric model.
+
+```{r uga_4, echo = FALSE}
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"Standard GARCH Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "apARCH"),
+                          mean.model = list(armaOrder = c(0,0), include.mean = TRUE, 
+                                            archm = FALSE ))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+"Asymmetric Power ARCH (apARCH) Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uga.aic <- append(uga.aic, infocriteria(base.1.fit)[1])
+
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'gjrGARCH'),
+                          mean.model = list(armaOrder = c(0,0), include.mean = TRUE, 
+                                            archm = FALSE ))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"GJR ARCH Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uga.aic <- append(uga.aic, infocriteria(base.1.fit)[1])
+
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'eGARCH'),
+                          mean.model = list(armaOrder = c(0,0), include.mean = TRUE, 
+                                            archm = FALSE ))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+"eARCH Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uga.aic <- append(uga.aic, infocriteria(base.1.fit)[1])
+
+```
+
+Again, I will replace the normal distribution with the student t distribution. Model fit improves extremely slightly and suddenly the asymmetric models have a better fit. I will come back to this. 
+
+```{r uga_5, echo=FALSE}
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = 'sGARCH'),
+                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE),                                                         distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"Standard GARCH Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uga.aic <- append(uga.aic, infocriteria(base.1.fit)[1])
+
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "apARCH"),
+                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE, 
+                                            archm = FALSE ), distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+"Asymmetric Power ARCH (apARCH) Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uga.aic <- append(uga.aic, infocriteria(base.1.fit)[1])
+
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "gjrGARCH"),
+                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE, 
+                                            archm = FALSE ), distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"GJR ARCH Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uga.aic <- append(uga.aic, infocriteria(base.1.fit)[1])
+
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "eGARCH"),
+                          mean.model = list(armaOrder = c(0,0), include.mean = FALSE, 
+                                            archm = FALSE ), distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+"eARCH Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uga.aic <- append(uga.aic, infocriteria(base.1.fit)[1])
+
+```
+
+
+Now lets start over and fit an ARMA process to the residuals. I utilize the Box- Jenkins procedure to fit the model. A good specification would have no autocorrelation in the residuals, but autocorrelation in the squared residuals.
+
+(2,1) is the best model specification
+
+
+```{r uga_arma1, echo=FALSE}
+checkresiduals(x$etf_asset_error)
+
+a <- arima(x$etf_asset_error, c(2,0,1))
+Box.test(a$residuals, lag = 10, type = 'Ljung-Box')
+Box.test(a$residuals^2, lag = 10, type = 'Ljung-Box')
+```
+
+Now let's start over from the beginning with out base GARCH model and see if we should include the unconditional mean. It does not improve fit or produce significant estimates. I will leave it out. 
+
+```{r uga_arma2, echo=FALSE}
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(2,1), include.mean = FALSE))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"No Unconditional Mean Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uga.arma.aic <- infocriteria(base.1.fit)[1]
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(2,1), include.mean = TRUE))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"Including Unconditional Mean Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uga.arma.aic <- append(uga.arma.aic, infocriteria(base.1.fit)[1])
+
+```
+
+Including the ARCHM process does not produce a better fit but does produce a singificant estimate. I will come back. 
+
+```{r uga_arma3, echo = FALSE}
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(2,1), include.mean = FALSE))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"No ARCH in Mean Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(2,1), include.mean = FALSE, 
+                                            archm = TRUE))
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"ARCH in Mean Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uga.arma.aic <- append(uga.arma.aic, infocriteria(base.1.fit)[1])
+
+```
+
+```{r uga_mute, echo=FALSE}
+
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "apARCH"),
+                          mean.model = list(armaOrder = c(2,1), include.mean = FALSE),
+                          distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+uga.arma.aic <- append(uga.arma.aic, infocriteria(base.1.fit)[1])
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "gjrGARCH"),
+                          mean.model = list(armaOrder = c(2,1), include.mean = FALSE),
+                          distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+uga.arma.aic <- append(uga.arma.aic, infocriteria(base.1.fit)[1])
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "eGARCH"),
+                          mean.model = list(armaOrder = c(2,1), include.mean = FALSE),
+                          distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+uga.arma.aic <- append(uga.arma.aic, infocriteria(base.1.fit)[1])
+
+```
+
+
+Now lets compare normal distribution with student-t. Again we find student-t distribution to have a better fit. 
+```{r uga_arma4, echo=FALSE}
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(2,1), include.mean = FALSE),
+                          distribution.model = 'norm')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"Normal Distribution Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(2,1), include.mean = FALSE),
+                          distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"Student t Distribution Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+```
+
+Now we fit asymmetric models and find that just like the non ARMA models, asymmetrics have a better fit. 
+
+
+```{r uga_arma5, echo=FALSE}
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(2,1), include.mean = FALSE),
+                          distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"Standard GARCH Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uga.arma.aic <- append(uga.arma.aic, infocriteria(base.1.fit)[1])
+
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "apARCH"),
+                          mean.model = list(armaOrder = c(2,1), include.mean = FALSE),
+                          distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"Asymmetric Power GARCH (apGARCH) Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uga.arma.aic <- append(uga.arma.aic, infocriteria(base.1.fit)[1])
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "gjrGARCH"),
+                          mean.model = list(armaOrder = c(2,1), include.mean = FALSE),
+                          distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"GJR GARCH Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uga.arma.aic <- append(uga.arma.aic, infocriteria(base.1.fit)[1])
+
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "eGARCH"),
+                          mean.model = list(armaOrder = c(2,1), include.mean = FALSE),
+                          distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"Exponential Power GARCH Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+uga.arma.aic <- append(uga.arma.aic, infocriteria(base.1.fit)[1])
+
+```
+
+
+As Exponential GARCH has the best fit, I will try adding back in ARCHM like I did with USO. It does not produce a better fit. 
+
+```{r uga_final, echo = FALSE}
+base.1.spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), model = "eGARCH"),
+                          mean.model = list(armaOrder = c(2,1), include.mean = FALSE,
+                                            archm=TRUE),
+                          distribution.model = 'std')
+base.1.fit <- ugarchfit(data = x$etf_asset_error, spec = base.1.spec, solver = 'hybrid')
+
+"Exponential Power GARCH Robust Coefficients"
+base.1.fit@fit[['robust.matcoef']]
+infocriteria(base.1.fit)
+
+base.results$UGA <- uga.aic
+arma.results$'UGA(2,1)' <- uga.arma.aic
+
+```
+
+### UGA Summary
+UGA results are very similiar to USO both with and without an ARMA process. Asymmetric models performed better, student t distributions have a better fit, and even ARCH-M produces significant coefficients *but* does not produce a better fit as in USO. The best fit is has a (2,1) ARMA process, is a student t distribution, and is an Exponential Power GARCH. 
+
+## AIC Tables
+```{r echo = FALSE}
+library(knitr)
+kable(base.results, caption = "Model Results (no ARMA Process)")
+kable(arma.results, caption = "Model Results (ARMA Process)")
+
+```
+
+
