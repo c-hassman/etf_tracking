@@ -1,0 +1,12 @@
+These files contain data pulled from Bloomberg on November 29, 2020. 
+
+For each file, there are three columns: Date, FUND_NET_ASSET_VALUE, ALL_BROKERS_ADV_TOT_AGGR_VOL
+
+Date: This is a string the expresses the date in the format: MM/DD/YY
+
+FUND_NET_ASSET_VALUE: 
+
+ALL_BROKERS_ADV_TOT_AGGR_VOL:
+
+
+The NAV values were used to update the original CSV files. 

@@ -1,0 +1,31 @@
+
+The files in this folder are gathered from the Bloomberg terminals. There are three columns: "Date", "FUND_FLOW", "FUND_TOTAL_ASSETS". 
+
+Date: For some of these this is the date represented as a string. The last date should be November 27, 2020. Format: MM/DD/YY
+
+FUND_FLOW: From Bloomberg:
+Calculated net value of all creation/redepmtion activity on the primary ticker of the share class. Currently only available for ETFs (Exchange Traded Funds). Not caclulated for cross-listed funds. 
+For Exchange Traded Funds the net fund flow is calculated as:
+[ Shares Outstanding(t) - Shares Outstanding(t-1)] * NAV(t)
+Where:
+Shares Outstanding is Current Shares Oustanding 
+NAV is Net Asset Value
+Display:
+Figure is displayed in millions and currency defaults to Net Asset Value Currency of the primary ticket of the share class. Frequency is daily when available and the last observation date corresponds to Fund Flow Date. 
+For United States ETFs:
+Calculated with a one day lag because the shares outsanding is reported by the ETF issues with a one day lag. Fund flows are displayed on the proicess date, not the settlement date. 
+
+FUND_TOTAL_ASSETS: From Bloomberg:
+Total amount of money invested in the fund, including cash and securities. 
+Values are reported to Bloomberg by a varierty of sources, including but not limited to fund companies, transfer agencts, official documents, third parties, and other pricing sources. 
+When retreiving historic values, the data will be returned in the cuirrency noted in Total Assets Currency unless a different currency is specificed in the hiistory formula. 
+Dispplay:
+This field is displayed in millions. 
+The associated currency of this field is stored in Totral Assets Currency
+The dispolayed value is effective as of the dated stored in Total Assets Date
+
+
+The concerning bit is the note for United States ETFs being calculated on a lag however reading it closely, it seems that the dates which are attached to the data should be correct, but it won't be available for the very last day. I will need to double check this. 
+
+
+

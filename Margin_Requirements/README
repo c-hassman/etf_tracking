@@ -1,0 +1,35 @@
+
+
+These files represent the Historical Margins for Corn, Soybeans, Wheat, Crude Oil, and Gasoline traded on exchanged part of the CME Group. They are stored in compressed (ZIP) files on the CME Website (https://www.cmegroup.com/clearing/risk-management/historical-margins.html) In these Zip files are large PDF files which contain tables containing margin information. The Zip files are seperated into time periods. At the time of pulling the data (November 30, 2020), there were four: "2003-2008", "2009-2013", "2014-2019", "2020". Because the dataset goes from January 2012 to 2020, the last three were relevant.
+
+I first began by downloading the relevant files and extracting them in seperate folders, one for each commodity. 
+
+There are five rows in each table: "Business date", "Description", "Exchange", "Margin", and "Roll Product Code". I reached out to the CME group to confirm that "Roll Product Code" is the contract ordered by expiration. For example "C-01" would be the front month, "C-02" is the second to expire, "C-03" is the third to expire, etc.  There is an observation for each contract on each day. 
+
+
+The next step is processing the files. So do this I created a short python script which utilized the tabular package. Here is an overview of the process seperated by the function which contains them 
+
+function(process_margin)
+completes steps 1:7 for each of the files which make up one commodity
+- function(read_margin)
+-- 1) Reads in the table from the pdf using the tabular package. This returns a list of dataframes for the time periods with proper column names
+-- 2) Concatenates the list of dataframes to a single dataframe
+-- 3) Resets index and removes the first row, which was the row names from the original file
+-- 4) Converts "Business Date" Column to a datetime object and sets that to index
+- function(format_margin)
+-- 5) Drop the unused columns: "Description", "Exchange"
+-- 6) Pivot the Dataframe so that each "Roll Product Code' is its own column and each day had only one row
+-- 7) Reordered the columns so they are in the correct order
+
+Once these tasks were completed, I wrote the full file to a csv to be able to have the full clean dataset for future reference. I then subsetted each dataframe both in terms of time period and the contracts listed. I then rewrote this to a new csv which can be easily loaded into R
+
+
+
+
+Multiple challenges were necessary to overcome: 
+- Some column names were not consistent: namely "Business Date" was also "Business date"
+- The format of the "Roll Product Code" was not consistent: C-1 on some, C-01 on others
+- Crude Oil having so many more contracts listed (more than one hundred)
+- Reading in the top row as headers
+- Each table retaining their original index when being concatenated
+
