@@ -9,6 +9,8 @@ library(xts)
 library(tidyverse)
 library(fpp2)
 library(stats)
+library(gridExtra)
+library(grid)
 
 setwd("~/Documents/etf_tracking")
 
@@ -252,51 +254,64 @@ TDm_df$ETF <- factor(TDm_df$ETF, levels = TDm_df$ETF)
 TDa_df$ETF <- factor(TDa_df$ETF, levels = TDa_df$ETF)
 
 # TD Alpha
-ggplot()+ 
+g1 <- ggplot()+ 
   geom_errorbar(data = TD_df, mapping = aes(x = ETF, ymin = Alpha_min, 
                                             ymax = Alpha_max), width = 0.25) +
   geom_point(data = TD_df, aes(x = ETF, y = Alpha)) +
-  ggtitle('TD Alpha Coefficient Estimates') +
-  ylab('Alpha Estimate') + theme_bw()
+  ggtitle('Alpha Coefficient Estimates') +
+  ylab('Total TD') + theme_bw() + xlab('') +
+  theme(plot.margin=unit(c(0.1,0.05,-0.4,0.05), "cm")) +
+  ylim(-0.041, 0.03) + geom_hline(yintercept = 0, linetype = 'dashed')
 
 #TDm Alpha
-ggplot()+ 
+g2 <- ggplot()+ 
   geom_errorbar(data = TDm_df, mapping = aes(x = ETF, ymin = Alpha_min, 
                                             ymax = Alpha_max), width = 0.25) +
   geom_point(data = TDm_df, aes(x = ETF, y = Alpha)) +
-  ggtitle('Managerial TD Alpha Coefficient Estimates') +
-  ylab('Alpha Estimate') + theme_bw()
+  #ggtitle('Managerial TD Alpha Coefficient Estimates') +
+  ylab('Managerial TD') + theme_bw() + xlab('') +
+  theme(plot.margin=unit(c(-0.05,0.05,-0.1,0.05), "cm")) +
+  ylim(-0.041, 0.03) + geom_hline(yintercept = 0, linetype = 'dashed')
 
 #TDa Alpha
-ggplot()+ 
+g3 <- ggplot()+ 
   geom_errorbar(data = TDa_df, mapping = aes(x = ETF, ymin = Alpha_min, 
                                             ymax = Alpha_max), width = 0.25) +
   geom_point(data = TDa_df, aes(x = ETF, y = Alpha)) +
-  ggtitle('Arbitrage TD Alpha Coefficient Estimates') +
-  ylab('Alpha Estimate') + theme_bw()
+  #ggtitle('Arbitrage TD Alpha Coefficient Estimates') +
+  ylab('Arbitrage TD') + theme_bw() + xlab('') +
+  theme(plot.margin=unit(c(-0.05,0.05,-0.1,0.05), "cm")) +
+  ylim(-0.041, 0.03) + geom_hline(yintercept = 0, linetype = 'dashed')
 
 #TD Beta
-ggplot()+ 
+g4 <- ggplot()+ 
   geom_errorbar(data = TD_df, mapping = aes(x = ETF, ymin = Beta_min, 
                                             ymax = Beta_max), width = 0.25) +
   geom_point(data = TD_df, aes(x = ETF, y = Beta)) +
-  ggtitle('TD Beta Coefficient Estimates') +
-  ylab('Alpha Estimate') + theme_bw()
+  ggtitle('Beta Coefficient Estimates') +
+  ylab('') + theme_bw() + xlab('') +
+  theme(plot.margin=unit(c(0.1,0.05,-0.4,0.05), "cm")) +
+  ylim(0.88, 1.02) + geom_hline(yintercept = 1, linetype = 'dashed')
 
 #TDm Beta
-ggplot()+ 
+g5 <- ggplot()+ 
   geom_errorbar(data = TDm_df, mapping = aes(x = ETF, ymin = Beta_min, 
                                             ymax = Beta_max), width = 0.25) +
   geom_point(data = TDm_df, aes(x = ETF, y = Beta)) +
-  ggtitle('Managerial TD Beta Coefficient Estimates') +
-  ylab('Alpha Estimate') + theme_bw()
+  #ggtitle('Managerial TD Beta Coefficient Estimates') +
+  ylab('') + theme_bw() + xlab('') +
+  theme(plot.margin=unit(c(-0.05,0.05,-0.1,0.05), "cm")) +
+  ylim(0.88, 1.02) + geom_hline(yintercept = 1, linetype = 'dashed')
 
 # TDa Beta
-ggplot()+ 
+g6 <- ggplot()+ 
   geom_errorbar(data = TDa_df, mapping = aes(x = ETF, ymin = Beta_min, 
                                             ymax = Beta_max), width = 0.25) +
   geom_point(data = TDa_df, aes(x = ETF, y = Beta)) +
-  ggtitle('Arbitrage TD Beta Coefficient Estimates') +
-  ylab('Alpha Estimate') + theme_bw()
+  #ggtitle('Arbitrage TD Beta Coefficient Estimates') +
+  ylab('') + theme_bw() + xlab('') +
+  theme(plot.margin=unit(c(-0.05,0.05,-0.1,0.05), "cm")) +
+  ylim(0.88, 1.02) + geom_hline(yintercept = 1, linetype = 'dashed')
 
+grid.arrange(g1,g4,g2,g5,g3,g6, nrow = 3)
 
