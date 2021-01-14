@@ -81,7 +81,23 @@ USO <- USO[!(USO$ROLL == 1),]
 UGA <- na.omit(UGA) 
 UGA <- UGA[!(UGA$ROLL == 1),]
 
+######## Summary info
 
+x <- (UGA$per_ETF_return - UGA$per_asset_return)
+y <- (UGA$per_nav_return - UGA$per_asset_return)
+z <- (UGA$per_ETF_return - UGA$per_nav_return)
+
+summary(x)
+sd(x)
+length(x)
+
+summary(y)
+sd(y)
+length(y)
+
+summary(z)
+sd(z)
+length(z)
 
 ####### Test for Unit Root in Returns
 # # Benchmark Returns
