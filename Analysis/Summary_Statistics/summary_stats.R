@@ -29,13 +29,16 @@ UGA_in <- data_pull_in("UGA")
 #############################
 
 ### Do Calculations:
-calc <- function(data){
-  data <- na.omit(data)
-  ETF = c(min(data), median(data), mean(data), max(data), sd(data), length(data))
+calc <- function(data, var){
+  # Checks to see if you are looking at return based data: if so, omit na row
+  if(var == "per_asset_return" || var == "per_NAV_return" || var == "per_ETF_return" || var == "TD" || var == "TDa" || var == "TDm"){
+    data <- na.omit(data)
+  }
+  # do calculations
+  ETF = c(min(data), median(data), mean(data), max(data), sd(data), length(data)) 
+  return(ETF)
 }
 
-x <- na.omit(SOYB_ex)
-length(x$TD)
 
 
 ### Table make 
@@ -43,18 +46,18 @@ length(x$TD)
 # even if it isnt pretty
 table_make_ex <- function(var){
   values <- c("Min", "Median", "Mean", "Max", "STD DEV", "N")
-  data_table <- data.frame(values, calc(CORN_ex[, var]), calc(SOYB_ex[,var]), 
-                           calc(WEAT_ex[,var]), calc(USO_ex[,var]), 
-                           calc(UGA_ex[,var]))
+  data_table <- data.frame(values, calc(CORN_ex[, var], var), calc(SOYB_ex[,var], var), 
+                           calc(WEAT_ex[,var], var), calc(USO_ex[,var], var), 
+                           calc(UGA_ex[,var], var))
   colnames(data_table) <- c("Value", "CORN", "SOYB", "WEAT", "USO", "UGA")
   return(data_table)
 }
 
 table_make_in <- function(var){
   values <- c("Min", "Median", "Mean", "Max", "STD DEV", "N")
-  data_table <- data.frame(values, calc(CORN_in[, var]), calc(SOYB_in[,var]), 
-                           calc(WEAT_in[,var]), calc(USO_in[,var]), 
-                           calc(UGA_in[,var]))
+  data_table <- data.frame(values, calc(CORN_in[, var], var), calc(SOYB_in[,var], var), 
+                           calc(WEAT_in[,var], var), calc(USO_in[,var],var), 
+                           calc(UGA_in[,var], var))
   colnames(data_table) <- c("Value", "CORN", "SOYB", "WEAT", "USO", "UGA")
   return(data_table)
 }
