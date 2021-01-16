@@ -1,4 +1,3 @@
-
 File Organization
 > Data\
 >>> \DB_in\              : Database inclusive of roll dates, full data base, does not include benchmark

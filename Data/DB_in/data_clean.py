@@ -1,4 +1,4 @@
-S#!/usr/bin/env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Thu Jan 14 10:56:40 2021
@@ -60,7 +60,7 @@ def main():
     print("Combining and Subsetting CORN...")
     CORN_df = combine_subset_data(CORN_NAV, CORN_price, "2012-01-04", "2020-07-31")
     print("Writing CORN to CSV")
-    CORN_df.to_csv("CORN_P_NAV.csv", index_label = "Date")
+    CORN_df.to_csv("CORN_in.csv", index_label = "Date")
     
    
     # SOYB
@@ -72,7 +72,7 @@ def main():
     print("Combining and Subsetting SOYB...")
     SOYB_df = combine_subset_data(SOYB_NAV, SOYB_price, "2012-01-03", "2020-07-31")
     print("Writing SOYB to CSV")
-    SOYB_df.to_csv("SOYB_P_NAV.csv", index_label = "Date")
+    SOYB_df.to_csv("SOYB_in.csv", index_label = "Date")
     
     #WEAT
     print("Importing WEAT...")
@@ -83,7 +83,7 @@ def main():
     print("Combining and Subsetting WEAT...")
     WEAT_df = combine_subset_data(WEAT_NAV, WEAT_price, "2012-01-04", "2020-07-31")
     print("Writing WEAT to CSV")
-    WEAT_df.to_csv("WEAT_P_NAV.csv", index_label = "Date")
+    WEAT_df.to_csv("WEAT_in.csv", index_label = "Date")
     
     #USO
     print("Importing USO...")
@@ -94,7 +94,7 @@ def main():
     print("Combining and Subsetting USO...")
     USO_df = combine_subset_data(USO_NAV, USO_price, "2013-07-15", "2020-01-30")
     print("Writing USO to CSV")
-    USO_df.to_csv("USO_P_NAV.csv", index_label = "Date")
+    USO_df.to_csv("USO_in.csv", index_label = "Date")
     
     #UGA
     print("Importing UGA...")
@@ -105,7 +105,7 @@ def main():
     print("Combining and Subsetting UGA...")
     UGA_df = combine_subset_data(UGA_NAV, UGA_price, "2012-01-04", "2020-07-31")
     print("Writing UGA to CSV")
-    UGA_df.to_csv("UGA_P_NAV.csv", index_label = "Date")
+    UGA_df.to_csv("UGA_in.csv", index_label = "Date")
 
 
 if __name__ == "__main__":
