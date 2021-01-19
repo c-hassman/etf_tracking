@@ -12,9 +12,14 @@ data intregrity.
 """
 import pandas as pd
 import os
-
 #os.chdir("home/colburn/Documents/etf_tracking/Price_NAV_Full_DB") #set wkdir
 
+# Need to import parse data from other folder
+import sys
+sys.path.insert(1, "/home/colburn/Documents/etf_tracking/Data/Aux")
+from parse_dates import parse_dates
+
+roll_path = "/home/colburn/Documents/etf_tracking/Data/Aux/Roll_Dates/"
 
 def import_data(ETF_ticker):
     # define sheet names
@@ -49,6 +54,22 @@ def combine_subset_data(NAV_df, price_df, start, end):
     data_df = data_df.loc[start:end]
     return data_df
     
+def add_rolls(data_df, roll_file):
+    # Call the parse_dates function, which returns a list of the dates found 
+    # in roll_file
+    roll_dates = parse_dates(roll_file)
+    # Default value for the Roll is 0
+    data_df['Roll'] = 0
+    # Pandas like to convert dates to a timestamp. This prevents:
+    data_df.index = data_df.index.date
+    # Loop through each row of the dataframe and change "Roll" dummy to 1
+    # is the data is found in the roll_list
+    for index, row in data_df.iterrows():
+        if index in roll_dates:
+            data_df['Roll'][index] = 1
+    return data_df
+    
+    
 
 def main():
     # CORN
@@ -59,6 +80,9 @@ def main():
     CORN_price = clean_data(CORN_price)
     print("Combining and Subsetting CORN...")
     CORN_df = combine_subset_data(CORN_NAV, CORN_price, "2012-01-04", "2020-07-31")
+    print("Adding Roll Dates to CORN")
+    roll_file = roll_path + "CORN_Roll_Dates.txt"
+    CORN_df = add_rolls(CORN_df, roll_file)
     print("Writing CORN to CSV")
     CORN_df.to_csv("CORN_in.csv", index_label = "Date")
     
@@ -71,6 +95,9 @@ def main():
     SOYB_price = clean_data(SOYB_price)
     print("Combining and Subsetting SOYB...")
     SOYB_df = combine_subset_data(SOYB_NAV, SOYB_price, "2012-01-04", "2020-07-31")
+    print("Adding Roll Dates to SOYB")
+    roll_file = roll_path + "SOYB_Roll_Dates.txt"
+    SOYB_df = add_rolls(SOYB_df, roll_file)
     print("Writing SOYB to CSV")
     SOYB_df.to_csv("SOYB_in.csv", index_label = "Date")
     
@@ -82,6 +109,9 @@ def main():
     WEAT_price = clean_data(WEAT_price)
     print("Combining and Subsetting WEAT...")
     WEAT_df = combine_subset_data(WEAT_NAV, WEAT_price, "2012-01-04", "2020-07-31")
+    print("Adding Roll Dates to WEAT")
+    roll_file = roll_path + "WEAT_Roll_Dates.txt"
+    WEAT_df = add_rolls(WEAT_df, roll_file)
     print("Writing WEAT to CSV")
     WEAT_df.to_csv("WEAT_in.csv", index_label = "Date")
     
@@ -93,6 +123,9 @@ def main():
     USO_price = clean_data(USO_price)
     print("Combining and Subsetting USO...")
     USO_df = combine_subset_data(USO_NAV, USO_price, "2013-07-15", "2020-01-30")
+    print("Adding Roll Dates to USO")
+    roll_file = roll_path + "USO_Roll_Dates.txt"
+    USO_df = add_rolls(USO_df, roll_file)
     print("Writing USO to CSV")
     USO_df.to_csv("USO_in.csv", index_label = "Date")
     
@@ -104,6 +137,9 @@ def main():
     UGA_price = clean_data(UGA_price)
     print("Combining and Subsetting UGA...")
     UGA_df = combine_subset_data(UGA_NAV, UGA_price, "2012-01-04", "2020-07-31")
+    print("Adding Roll Dates to UGA")
+    roll_file = roll_path + "UGA_Roll_Dates.txt"
+    UGA_df = add_rolls(UGA_df, roll_file)
     print("Writing UGA to CSV")
     UGA_df.to_csv("UGA_in.csv", index_label = "Date")
 
