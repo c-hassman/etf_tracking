@@ -70,7 +70,7 @@ def main():
     SOYB_NAV = clean_data(SOYB_NAV)
     SOYB_price = clean_data(SOYB_price)
     print("Combining and Subsetting SOYB...")
-    SOYB_df = combine_subset_data(SOYB_NAV, SOYB_price, "2012-01-03", "2020-07-31")
+    SOYB_df = combine_subset_data(SOYB_NAV, SOYB_price, "2012-01-04", "2020-07-31")
     print("Writing SOYB to CSV")
     SOYB_df.to_csv("SOYB_in.csv", index_label = "Date")
     
