@@ -66,7 +66,7 @@ def add_rolls(data_df, roll_file):
     # is the data is found in the roll_list
     for index, row in data_df.iterrows():
         if index in roll_dates:
-            data_df['Roll'][index] = 1
+            data_df['Roll'].loc[index] = 1
     return data_df
     
     
