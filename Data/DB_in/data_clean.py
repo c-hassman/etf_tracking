@@ -20,6 +20,7 @@ sys.path.insert(1, "/home/colburn/Documents/etf_tracking/Data/Aux")
 from parse_dates import parse_dates
 
 roll_path = "/home/colburn/Documents/etf_tracking/Data/Aux/Roll_Dates/"
+ohlv_path = "/home/colburn/Documents/etf_tracking/Data/Aux/OHLV/"
 
 def import_data(ETF_ticker):
     # define sheet names
@@ -68,7 +69,20 @@ def add_rolls(data_df, roll_file):
         if index in roll_dates:
             data_df['Roll'].loc[index] = 1
     return data_df
-    
+
+def pull_ohlc(data_df, ohlv_file):
+    # Pull open, high, low, close, volume, file and combine with data
+    ohlv_df = pd.read_csv(ohlv_path + ohlv_file)
+    # Convert date from character to datetime
+    ohlv_df['Date'] = pd.to_datetime(ohlv_df['Date'])
+    #Set date as index
+    ohlv_df = ohlv_df.set_index("Date")
+    # Keep only date from timestamp
+    ohlv_df.index = ohlv_df.index.date
+    # Remove umnecessary Close and Turnover columns
+    ohlv_df = ohlv_df.drop(['Close', 'Turnover'], axis = 1)
+    data_df = pd.concat([data_df, ohlv_df], axis = 1, join = "inner")
+    return(data_df)
     
 
 def main():
@@ -83,6 +97,8 @@ def main():
     print("Adding Roll Dates to CORN")
     roll_file = roll_path + "CORN_Roll_Dates.txt"
     CORN_df = add_rolls(CORN_df, roll_file)
+    print("Adding CORN OHLV Data")
+    CORN_df = pull_ohlc(CORN_df, "CORN_OHLV.csv")
     print("Writing CORN to CSV")
     CORN_df.to_csv("CORN_in.csv", index_label = "Date")
     
@@ -98,6 +114,8 @@ def main():
     print("Adding Roll Dates to SOYB")
     roll_file = roll_path + "SOYB_Roll_Dates.txt"
     SOYB_df = add_rolls(SOYB_df, roll_file)
+    print("Adding OHLV Data")
+    SOYB_df = pull_ohlc(SOYB_df, "SOYB_OHLV.csv")
     print("Writing SOYB to CSV")
     SOYB_df.to_csv("SOYB_in.csv", index_label = "Date")
     
@@ -112,6 +130,8 @@ def main():
     print("Adding Roll Dates to WEAT")
     roll_file = roll_path + "WEAT_Roll_Dates.txt"
     WEAT_df = add_rolls(WEAT_df, roll_file)
+    print("Adding WEAT OHLV Data")
+    WEAT_df = pull_ohlc(WEAT_df, "WEAT_OHLV.csv")
     print("Writing WEAT to CSV")
     WEAT_df.to_csv("WEAT_in.csv", index_label = "Date")
     
@@ -123,9 +143,11 @@ def main():
     USO_price = clean_data(USO_price)
     print("Combining and Subsetting USO...")
     USO_df = combine_subset_data(USO_NAV, USO_price, "2013-07-15", "2020-01-30")
-    print("Adding Roll Dates to USO")
-    roll_file = roll_path + "USO_Roll_Dates.txt"
-    USO_df = add_rolls(USO_df, roll_file)
+    #print("Adding Roll Dates to USO")
+    #roll_file = roll_path + "USO_Roll_Dates.txt"
+    #USO_df = add_rolls(USO_df, roll_file)
+    print("Adding USO OHLV Data")
+    USO_df = pull_ohlc(USO_df, "USO_OHLV.csv")
     print("Writing USO to CSV")
     USO_df.to_csv("USO_in.csv", index_label = "Date")
     
@@ -137,9 +159,11 @@ def main():
     UGA_price = clean_data(UGA_price)
     print("Combining and Subsetting UGA...")
     UGA_df = combine_subset_data(UGA_NAV, UGA_price, "2012-01-04", "2020-07-31")
-    print("Adding Roll Dates to UGA")
-    roll_file = roll_path + "UGA_Roll_Dates.txt"
-    UGA_df = add_rolls(UGA_df, roll_file)
+    #print("Adding Roll Dates to UGA")
+    #roll_file = roll_path + "UGA_Roll_Dates.txt"
+    #UGA_df = add_rolls(UGA_df, roll_file)
+    print("Adding UGA OHLV Data")
+    UGA_df = pull_ohlc(UGA_df, "UGA_OHLV.csv")
     print("Writing UGA to CSV")
     UGA_df.to_csv("UGA_in.csv", index_label = "Date")
 
