@@ -31,8 +31,45 @@ WEAT_in <- mz_fun(WEAT_in)
 USO_in <- mz_fun(USO_in)
 UGA_in <- mz_fun(UGA_in)
 
-# GRAPH SQUARED RETURNS
 
+
+##### Non-Squared Residuals ###################################################
+
+# ACF GRAPH: RESIDUALS
+corn_acf <- forecast::Acf(CORN_in$Ea, plot = FALSE)
+soyb_acf <- forecast::Acf(SOYB_in$Ea, plot = FALSE)
+weat_acf <- forecast::Acf(WEAT_in$Ea, plot = FALSE)
+uso_acf <- forecast::Acf(USO_in$Ea, plot = FALSE)
+uga_acf <- forecast::Acf(UGA_in$Ea, plot = FALSE)
+
+
+par(mfrow = c(3, 2) , mai = c(0.2, 0.3, 0.55, 0.5))  # come back and change format
+plot(corn_acf[2:21], main = "CORN")
+plot(soyb_acf[2:21], main = "SOYB")
+plot(weat_acf[2:21], main = "WEAT")
+plot(uso_acf[2:21], main = "USO")
+plot(uga_acf[2:21], main = "UGA")
+dev.off()
+
+# DICKEY-FULLER: RESIDUALS
+# In every case, we reject the null hypothesis and assume stationarity
+tseries::adf.test(CORN_in$Ea)
+tseries::adf.test(SOYB_in$Ea)
+tseries::adf.test(WEAT_in$Ea)
+tseries::adf.test(USO_in$Ea)
+tseries::adf.test(UGA_in$Ea)
+
+# LJUNG-BOX TEST: RESIDUALS
+# Evidence of serial correlaction
+stats::Box.test(CORN_in$Ea, type = "Ljung-Box", lag = 20)
+stats::Box.test(SOYB_in$Ea, type = "Ljung-Box", lag = 20)
+stats::Box.test(WEAT_in$Ea, type = "Ljung-Box", lag = 20)
+stats::Box.test(USO_in$Ea, type = "Ljung-Box", lag = 20)
+stats::Box.test(UGA_in$Ea, type = "Ljung-Box", lag = 20)
+
+##### Squared Residuals #######################################################
+
+# GRAPH SQUARED RETURNS
 par(mfrow = c(3, 2), mai = c(0.25, 0.5, 0.2, 0.05))
 plot(CORN_in$Date, CORN_in$Ea^2, type = "l", main = "CORN",
      xlab = "", ylab = "")
@@ -47,30 +84,6 @@ plot(UGA_in$Date, UGA_in$Ea^2, type = "l", main = "UGA",
 dev.off()
 
 
-# ACF GRAPH: RESIDUALS
-corn_acf <- forecast::Acf(CORN_in$Ea, plot = FALSE)
-soyb_acf <- forecast::Acf(SOYB_in$Ea, plot = FALSE)
-weat_acf <- forecast::Acf(WEAT_in$Ea, plot = FALSE)
-uso_acf <- forecast::Acf(USO_in$Ea, plot = FALSE)
-uga_acf <- forecast::Acf(UGA_in$Ea, plot = FALSE)
-
-par(mfrow = c(3, 2)) #, mai = c(0.25, 0.5, 0.2, 0.05))  # come back and change format
-plot(corn_acf, main = "CORN")
-plot(soyb_acf, main = "SOYB")
-plot(weat_acf, main = "WEAT")
-plot(uso_acf, main = "USO")
-plot(uga_acf, main = "UGA")
-dev.off()
-
-# DICKEY-FULLER: RESIDUALS
-# In every case, we reject the null hypothesis and assume stationarity
-tseries::adf.test(CORN_in$Ea)
-tseries::adf.test(SOYB_in$Ea)
-tseries::adf.test(WEAT_in$Ea)
-tseries::adf.test(USO_in$Ea)
-tseries::adf.test(UGA_in$Ea)
-
-
 # ACF GRAPH: SQUARED RESIDUALS
 corn2_acf <- forecast::Acf(CORN_in$Ea^2, plot = FALSE)
 soyb2_acf <- forecast::Acf(SOYB_in$Ea^2, plot = FALSE)
@@ -78,18 +91,18 @@ weat2_acf <- forecast::Acf(WEAT_in$Ea^2, plot = FALSE)
 uso2_acf <- forecast::Acf(USO_in$Ea^2, plot = FALSE)
 uga2_acf <- forecast::Acf(UGA_in$Ea^2, plot = FALSE)
 
-par(mfrow = c(3, 2)) #, mai = c(0.25, 0.5, 0.2, 0.05))  # come back and change format
-plot(corn2_acf, main = "CORN")
-plot(soyb2_acf, main = "SOYB")
-plot(weat2_acf, main = "WEAT")
-plot(uso2_acf, main = "USO")
-plot(uga2_acf, main = "UGA")
+par(mfrow = c(3, 2) , mai = c(0.3, 0.3, 0.55, 0.5)) 
+plot(corn2_acf[2:21], main = "CORN")
+plot(soyb2_acf[2:21], main = "SOYB")
+plot(weat2_acf[2:21], main = "WEAT")
+plot(uso2_acf[2:21], main = "USO")
+plot(uga2_acf[2:21], main = "UGA")
 dev.off()
 
-# LJUNG-BOX TEST: SQUARED RETURNS
-stats::Box.test(CORN_in$Ea^2, type = "Ljung-Box", lag = 10)
-stats::Box.test(SOYB_in$Ea^2, type = "Ljung-Box", lag = 10)
-stats::Box.test(WEAT_in$Ea^2, type = "Ljung-Box", lag = 10)
-stats::Box.test(USO_in$Ea^2, type = "Ljung-Box", lag = 10)
-stats::Box.test(UGA_in$Ea^2, type = "Ljung-Box", lag = 10)
+# LJUNG-BOX TEST: SQUARED RESIDUALS
+stats::Box.test(CORN_in$Ea^2, type = "Ljung-Box", lag = 20)
+stats::Box.test(SOYB_in$Ea^2, type = "Ljung-Box", lag = 20)
+stats::Box.test(WEAT_in$Ea^2, type = "Ljung-Box", lag = 20)
+stats::Box.test(USO_in$Ea^2, type = "Ljung-Box", lag = 20)
+stats::Box.test(UGA_in$Ea^2, type = "Ljung-Box", lag = 20)
 
