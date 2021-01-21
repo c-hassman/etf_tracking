@@ -80,8 +80,12 @@ def pull_ohlc(data_df, ohlv_file):
     # Keep only date from timestamp
     ohlv_df.index = ohlv_df.index.date
     # Remove umnecessary Close and Turnover columns
-    ohlv_df = ohlv_df.drop(['Close', 'Turnover'], axis = 1)
+    ohlv_df = ohlv_df.drop(['Close'], axis = 1)
+    # Combine new and old data
     data_df = pd.concat([data_df, ohlv_df], axis = 1, join = "inner")
+    # Drop commas from volume
+    data_df['Volume'] = data_df.replace(",", "", regex = True)
+    
     return(data_df)
     
 
