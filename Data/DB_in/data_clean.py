@@ -11,7 +11,7 @@ data intregrity.
 @contact: colburn7@vt.edu
 """
 import pandas as pd
-import os
+#import os
 #os.chdir("home/colburn/Documents/etf_tracking/Price_NAV_Full_DB") #set wkdir
 
 # Need to import parse data from other folder
@@ -21,6 +21,7 @@ from parse_dates import parse_dates
 
 roll_path = "/home/colburn/Documents/etf_tracking/Data/Aux/Roll_Dates/"
 ohlv_path = "/home/colburn/Documents/etf_tracking/Data/Aux/OHLV/"
+flow_path = "/home/colburn/Documents/etf_tracking/Data/Aux/Fund_Flow/"
 
 def import_data(ETF_ticker):
     # define sheet names
@@ -80,12 +81,25 @@ def pull_ohlc(data_df, ohlv_file):
     # Keep only date from timestamp
     ohlv_df.index = ohlv_df.index.date
     # Remove umnecessary Close and Turnover columns
-    ohlv_df = ohlv_df.drop(['Close'], axis = 1)
+    ohlv_df = ohlv_df.drop(['Close', 'Turnover'], axis = 1)
     # Combine new and old data
     data_df = pd.concat([data_df, ohlv_df], axis = 1, join = "inner")
     # Drop commas from volume
-    data_df['Volume'] = data_df.replace(",", "", regex = True)
+    data_df['Volume'] = data_df['Volume'].replace(",", "", regex = True)
     
+    return(data_df)
+
+def pull_flow(data_df, flow_file):
+    # Open flow file
+    flow_df = pd.read_csv(flow_path + flow_file)
+    # convert date from character to datetime
+    flow_df['Date'] = pd.to_datetime(flow_df['Date'])
+    # Set date as index
+    flow_df = flow_df.set_index("Date")    
+    # Keep only date from timestamp
+    flow_df.index = flow_df.index.date
+    # Combine new and old data
+    data_df = pd.concat([data_df, flow_df], axis = 1, join = "inner")
     return(data_df)
     
 
@@ -103,6 +117,10 @@ def main():
     CORN_df = add_rolls(CORN_df, roll_file)
     print("Adding CORN OHLV Data")
     CORN_df = pull_ohlc(CORN_df, "CORN_OHLV.csv")
+    
+    print("Adding Fund Flow Data")
+    CORN_df = pull_flow(CORN_df, "corn_flow.csv")
+    
     print("Writing CORN to CSV")
     CORN_df.to_csv("CORN_in.csv", index_label = "Date")
     
