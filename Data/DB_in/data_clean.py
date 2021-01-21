@@ -95,7 +95,9 @@ def pull_flow(data_df, flow_file):
     # convert date from character to datetime
     flow_df['Date'] = pd.to_datetime(flow_df['Date'])
     # Set date as index
-    flow_df = flow_df.set_index("Date")    
+    flow_df = flow_df.set_index("Date")   
+    # For now, do not want Fund Assets
+    flow_df = flow_df.drop("FUND_TOTAL_ASSETS", axis = 1)
     # Keep only date from timestamp
     flow_df.index = flow_df.index.date
     # Combine new and old data
@@ -117,10 +119,8 @@ def main():
     CORN_df = add_rolls(CORN_df, roll_file)
     print("Adding CORN OHLV Data")
     CORN_df = pull_ohlc(CORN_df, "CORN_OHLV.csv")
-    
-    print("Adding Fund Flow Data")
+    print("Adding SOYB Fund Flow Data")
     CORN_df = pull_flow(CORN_df, "corn_flow.csv")
-    
     print("Writing CORN to CSV")
     CORN_df.to_csv("CORN_in.csv", index_label = "Date")
     
@@ -138,6 +138,8 @@ def main():
     SOYB_df = add_rolls(SOYB_df, roll_file)
     print("Adding OHLV Data")
     SOYB_df = pull_ohlc(SOYB_df, "SOYB_OHLV.csv")
+    print("Adding SOYB Fund Flow Data")
+    SOYB_df = pull_flow(SOYB_df, "soyb_flow.csv")
     print("Writing SOYB to CSV")
     SOYB_df.to_csv("SOYB_in.csv", index_label = "Date")
     
@@ -154,6 +156,8 @@ def main():
     WEAT_df = add_rolls(WEAT_df, roll_file)
     print("Adding WEAT OHLV Data")
     WEAT_df = pull_ohlc(WEAT_df, "WEAT_OHLV.csv")
+    print("Adding WEAT Fund Flow Data")
+    WEAT_df = pull_flow(WEAT_df, "weat_flow.csv")
     print("Writing WEAT to CSV")
     WEAT_df.to_csv("WEAT_in.csv", index_label = "Date")
     
@@ -170,6 +174,8 @@ def main():
     #USO_df = add_rolls(USO_df, roll_file)
     print("Adding USO OHLV Data")
     USO_df = pull_ohlc(USO_df, "USO_OHLV.csv")
+    print("Adding Fund USO Flow Data")
+    USO_df = pull_flow(USO_df, "uso_flow.csv")
     print("Writing USO to CSV")
     USO_df.to_csv("USO_in.csv", index_label = "Date")
     
@@ -186,6 +192,8 @@ def main():
     #UGA_df = add_rolls(UGA_df, roll_file)
     print("Adding UGA OHLV Data")
     UGA_df = pull_ohlc(UGA_df, "UGA_OHLV.csv")
+    print("Adding UGA Fund Flow Data")
+    UGA_df = pull_flow(UGA_df, "uga_flow.csv")
     print("Writing UGA to CSV")
     UGA_df.to_csv("UGA_in.csv", index_label = "Date")
 
