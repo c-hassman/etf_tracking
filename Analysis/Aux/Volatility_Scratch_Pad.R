@@ -15,8 +15,9 @@ USO <- na.omit(data_pull_in("USO"))
 UGA <- na.omit(data_pull_in("UGA"))
 
 
+
 add_vol <- function(data){
-  data$vol <- (data$High - data$Low) / data$Price
+  data$vol <- (data$High - data$Low) / data$Low
   return(data)
 }
 
@@ -27,15 +28,19 @@ USO <- add_vol(USO)
 UGA <- add_vol(UGA)
 
 
-plot_vol <- function(data){
-  plot(data$Date, data$vol, type = 'l')
+plot_vol <- function(data, title){
+  plot(data$Date, data$vol, type = 'l', main = title)
 }
 
-plot_vol(CORN)
-plot_vol(SOYB)
-plot_vol(WEAT)
-plot_vol(USO)
-plot_vol(UGA)
+par(mfrow = c(3, 2))
+plot_vol(CORN, "Highest Interday Return: CORN")
+plot_vol(SOYB, "SOYB")
+plot_vol(WEAT, "WEAT")
+plot_vol(USO, "USO")
+plot_vol(UGA, "UGA")
+
+dev.off()
+
 
 vol_test <- function(data){
   print(tseries::adf.test(data$vol))
