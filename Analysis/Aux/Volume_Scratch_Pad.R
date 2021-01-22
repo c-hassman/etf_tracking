@@ -10,18 +10,45 @@ library("tidyverse")
 # IMPORT DATA
 # Drop first row (containing NAs from return calc)
 source("~/Documents/etf_tracking/Analysis/preprocessing.R")
-CORN_in <- na.omit(data_pull_in("CORN"))
-SOYB_in <- na.omit(data_pull_in("SOYB"))
-WEAT_in <- na.omit(data_pull_in("WEAT"))
-USO_in <- na.omit(data_pull_in("USO"))
-UGA_in <- na.omit(data_pull_in("UGA"))
+CORN <- na.omit(data_pull_in("CORN"))
+SOYB <- na.omit(data_pull_in("SOYB"))
+WEAT <- na.omit(data_pull_in("WEAT"))
+USO <- na.omit(data_pull_in("USO"))
+UGA <- na.omit(data_pull_in("UGA"))
 
-# Calculate multiple metrics of volume
-plot(CORN_in$Date, CORN_in$Volume, type = "l")
 
-CORN_in$logVolume <- log(CORN_in$Volume)
-CORN_in$Turnover <- CORN_in$Price * CORN_in$Volume
-CORN_in$logTurnover <- log(CORN_in$Turnover)
+CORN$Turnover <- CORN$Price * CORN$Volume
+SOYB$Turnover <- SOYB$Price * SOYB$Volume
+WEAT$Turnover <- WEAT$Price * WEAT$Volume
+USO$Turnover <- USO$Price * USO$Volume
+UGA$Turnover <- UGA$Price * UGA$Volume
+
+
+add_metric <- function(data){
+  data$metric <- abs(data$per_ETF_return) / data$Turnover
+  return(data)
+}
+
+CORN <- add_metric(CORN)
+SOYB <- add_metric(SOYB)
+WEAT <- add_metric(WEAT)
+USO <- add_metric(USO)
+UGA <- add_metric(UGA)
+
+
+plot_vol <- function(data, title){
+  plot(data$Date, data$metric, type = 'l', main = title)
+}
+
+par(mfrow = c(3, 2))
+plot_vol(CORN, "Amihud Illiquidity: CORN")
+plot_vol(SOYB, "SOYB")
+plot_vol(WEAT, "WEAT")
+plot_vol(USO, "USO")
+plot_vol(UGA, "UGA")
+
+dev.off()
+
 
 par(mfrow = c(3, 1))
 plot(CORN_in$Date, CORN_in$Volume, type = "l")
