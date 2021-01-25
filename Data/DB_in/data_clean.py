@@ -169,9 +169,9 @@ def main():
     USO_price = clean_data(USO_price)
     print("Combining and Subsetting USO...")
     USO_df = combine_subset_data(USO_NAV, USO_price, "2013-07-15", "2020-01-30")
-    #print("Adding Roll Dates to USO")
-    #roll_file = roll_path + "USO_Roll_Dates.txt"
-    #USO_df = add_rolls(USO_df, roll_file)
+    print("Adding Roll Dates to USO")
+    roll_file = roll_path + "USO_Roll_Dates.txt"
+    USO_df = add_rolls(USO_df, roll_file)
     print("Adding USO OHLV Data")
     USO_df = pull_ohlc(USO_df, "USO_OHLV.csv")
     print("Adding Fund USO Flow Data")
@@ -187,9 +187,9 @@ def main():
     UGA_price = clean_data(UGA_price)
     print("Combining and Subsetting UGA...")
     UGA_df = combine_subset_data(UGA_NAV, UGA_price, "2012-01-04", "2020-07-31")
-    #print("Adding Roll Dates to UGA")
-    #roll_file = roll_path + "UGA_Roll_Dates.txt"
-    #UGA_df = add_rolls(UGA_df, roll_file)
+    print("Adding Roll Dates to UGA")
+    roll_file = roll_path + "UGA_Roll_Dates.txt"
+    UGA_df = add_rolls(UGA_df, roll_file)
     print("Adding UGA OHLV Data")
     UGA_df = pull_ohlc(UGA_df, "UGA_OHLV.csv")
     print("Adding UGA Fund Flow Data")
