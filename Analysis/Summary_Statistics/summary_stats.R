@@ -87,11 +87,18 @@ write_csv(prices_df, "~/Documents/etf_tracking/Analysis/Summary_Statistics/retur
 
 ### TD
 TD <- table_make_ex("TD")
-TDa <- table_make_ex("TDa")
 TDm <- table_make_ex("TDm")
+TDa <- table_make_ex("TDa")
 
 TD_df <- rbind(TD, TDm, TDa)
 write_csv(prices_df, "~/Documents/etf_tracking/Analysis/Summary_Statistics/TD_summ.csv")
+
+
+### PD
+
+PD <- table_make_ex("PD")
+write_csv(PD, "~/Documents/etf_tracking/Analysis/Summary_Statistics/PD_summ.csv")
+
 
 
 # Clean up my removing all non-table elements
