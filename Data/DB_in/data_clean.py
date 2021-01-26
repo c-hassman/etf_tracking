@@ -84,9 +84,34 @@ def pull_ohlc(data_df, ohlv_file):
     ohlv_df = ohlv_df.drop(['Close', 'Turnover'], axis = 1)
     # Combine new and old data
     data_df = pd.concat([data_df, ohlv_df], axis = 1, join = "inner")
+    # Calculate Volatility
+    data_df['Volatility'] = round(((data_df['High'] - data_df['Low'])/data_df['Price']) * 100, 5)
     # Drop commas from volume
     data_df['Volume'] = data_df['Volume'].replace(",", "", regex = True)
-    
+    return(data_df)
+
+def pull_oil_ohlc(data_df, ohlv_file):
+    # Pull open, high, low, close, volume, file and combine with data
+    ohlv_df = pd.read_csv(ohlv_path + ohlv_file)
+    # Account for reverse stock split: divide Open, Close, etc by 8
+    # Not strictly necessary but good form
+    columns = ["Open", "High", "Low", "Close"]
+    for i in columns:
+        ohlv_df[i] = ohlv_df[i] / 8
+    # Convert date from character to datetime
+    ohlv_df['Date'] = pd.to_datetime(ohlv_df['Date'])
+    #Set date as index
+    ohlv_df = ohlv_df.set_index("Date")
+    # Keep only date from timestamp
+    ohlv_df.index = ohlv_df.index.date
+    # Remove umnecessary Close and Turnover columns
+    ohlv_df = ohlv_df.drop(['Close', 'Turnover'], axis = 1)
+    # Combine new and old data
+    data_df = pd.concat([data_df, ohlv_df], axis = 1, join = "inner")
+    # Calculate Volatility
+    data_df['Volatility'] = round(((data_df['High'] - data_df['Low'])/data_df['Price']) * 100, 5)
+    # Drop commas from volume
+    data_df['Volume'] = data_df['Volume'].replace(",", "", regex = True)
     return(data_df)
 
 def pull_flow(data_df, flow_file):
@@ -173,7 +198,7 @@ def main():
     roll_file = roll_path + "USO_Roll_Dates.txt"
     USO_df = add_rolls(USO_df, roll_file)
     print("Adding USO OHLV Data")
-    USO_df = pull_ohlc(USO_df, "USO_OHLV.csv")
+    USO_df = pull_oil_ohlc(USO_df, "USO_OHLV.csv")
     print("Adding Fund USO Flow Data")
     USO_df = pull_flow(USO_df, "uso_flow.csv")
     print("Writing USO to CSV")
