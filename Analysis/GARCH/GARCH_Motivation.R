@@ -35,6 +35,21 @@ UGA_in <- mz_fun(UGA_in)
 
 ##### Non-Squared Residuals ###################################################
 
+# GRAPH RESIDUALS
+par(mfrow = c(3, 2), mai = c(0.25, 0.5, 0.2, 0.05))
+plot(CORN_in$Date, CORN_in$Ea, type = "l", main = "CORN",
+     xlab = "", ylab = "")
+plot(SOYB_in$Date, SOYB_in$Ea, type = "l", main = "SOYB",
+     xlab = "", ylab = "")
+plot(WEAT_in$Date, WEAT_in$Ea, type = "l", main = "WEAT",
+     xlab = "", ylab = "Percent Error Squared")
+plot(USO_in$Date, USO_in$Ea, type = "l", main = "USO", 
+     xlab = "", ylab = "")
+plot(UGA_in$Date, UGA_in$Ea, type = "l", main = "UGA",
+     xlab = "", ylab = "")
+dev.off()
+
+
 # ACF GRAPH: RESIDUALS
 corn_acf <- forecast::Acf(CORN_in$Ea, plot = FALSE)
 soyb_acf <- forecast::Acf(SOYB_in$Ea, plot = FALSE)
@@ -69,7 +84,7 @@ stats::Box.test(UGA_in$Ea, type = "Ljung-Box", lag = 20)
 
 ##### Squared Residuals #######################################################
 
-# GRAPH SQUARED RETURNS
+# GRAPH SQUARED RESIDUALS
 par(mfrow = c(3, 2), mai = c(0.25, 0.5, 0.2, 0.05))
 plot(CORN_in$Date, CORN_in$Ea^2, type = "l", main = "CORN",
      xlab = "", ylab = "")

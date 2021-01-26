@@ -66,21 +66,32 @@ table_make_in <- function(var){
 ### Create Tables
 #############################
 
-# In the paper, the tables with the most values will be used (default is in).
-# but in the case of TDm, TD, Asset, etc, ex is used
+# Ex is used by Default
 
-Price_in <- table_make_in("Price")
-NAV_in <- table_make_in("NAV")
+#### Prices
+Price_ex <- table_make_ex("Price")
+NAV_ex <- table_make_ex("NAV")
+Asset_ex <- table_make_ex("asset_basket")
+
+prices_df <- rbind(Price_ex, NAV_ex, Asset_ex)
+write_csv(prices_df, "~/Documents/etf_tracking/Analysis/Summary_Statistics/prices_summ.csv")
+
+### Returns
+ETF_r <- table_make_ex("per_ETF_return")
+NAV_r <- table_make_ex("per_NAV_return")
+Asset_r <- table_make_ex("per_asset_return")
+
+returns_df <- rbind(ETF_r, NAV_r, Asset_r)
+write_csv(prices_df, "~/Documents/etf_tracking/Analysis/Summary_Statistics/returns_summ.csv")
 
 
-NAV_r_in <- table_make_in("per_NAV_return")
-ETF_r_in <- table_make_in("per_ETF_return")
+### TD
+TD <- table_make_ex("TD")
+TDa <- table_make_ex("TDa")
+TDm <- table_make_ex("TDm")
 
-
-TD_ex <- table_make_ex("TD")
-TDa_in <- table_make_in("TDa")
-TDm_ex <- table_make_ex("TDm")
-
+TD_df <- rbind(TD, TDm, TDa)
+write_csv(prices_df, "~/Documents/etf_tracking/Analysis/Summary_Statistics/TD_summ.csv")
 
 
 # Clean up my removing all non-table elements
