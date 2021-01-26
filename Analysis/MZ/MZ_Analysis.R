@@ -39,6 +39,36 @@ TDa_uso <- lm(USO$per_ETF_return ~ USO$per_NAV_return)
 TDa_uga <- lm(UGA$per_ETF_return ~ UGA$per_NAV_return)
 
 
+se_calc <- function(model){
+  k = length(model$coefficients)-1
+  SSE = sum(model$residuals**2)
+  n = length(model$residuals)
+  return(sqrt(SSE/(n-(1+k))))
+}
+
+ETFs <- c("CORN", "SOYB", "WEAT", "USO", "UGA")
+
+TD_se <- c(se_calc(TD_corn),
+        se_calc(TD_soyb),
+        se_calc(TD_weat),
+        se_calc(TD_uso),
+        se_calc(TD_uga))
+
+TDa_se <- c(se_calc(TDa_corn),
+           se_calc(TDa_soyb),
+           se_calc(TDa_weat),
+           se_calc(TDa_uso),
+           se_calc(TDa_uga))
+
+TDm_se <- c(se_calc(TDm_corn),
+           se_calc(TDm_soyb),
+           se_calc(TDm_weat),
+           se_calc(TDm_uso),
+           se_calc(TDm_uga))
+
+TD_se_df <- as.data.frame(cbind(ETFs, TD_se, TDa_se, TDm_se))
+write_csv(TD_se_df, "~/Documents/etf_tracking/Analysis/Summary_Statistics/TD_SE.csv")
+
 ##### Result Tables ############################################################
 
 #### TD
