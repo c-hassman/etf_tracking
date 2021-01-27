@@ -38,6 +38,12 @@ TDa_weat <- lm(WEAT$per_ETF_return ~ WEAT$per_NAV_return)
 TDa_uso <- lm(USO$per_ETF_return ~ USO$per_NAV_return)
 TDa_uga <- lm(UGA$per_ETF_return ~ UGA$per_NAV_return)
 
+summary(TD_uga)
+
+t <- -19.8969
+df <- 2050
+  
+2 * pt(t, df = df)
 
 se_calc <- function(model){
   k = length(model$coefficients)-1
