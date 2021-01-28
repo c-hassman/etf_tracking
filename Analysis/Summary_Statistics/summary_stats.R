@@ -105,3 +105,18 @@ write_csv(PD, "~/Documents/etf_tracking/Analysis/Summary_Statistics/PD_summ.csv"
 rm(CORN_ex, CORN_in, SOYB_ex, SOYB_in, WEAT_ex, WEAT_in, USO_ex, USO_in,
             UGA_ex, UGA_in)
 
+#### Inclusive Summary tables
+# Prices
+Prices_in <- table_make_in("Price")
+NAV_in <- table_make_in("NAV")
+
+prices_in <- rbind(Prices_in, NAV_in)
+write_csv(prices_in, "~/Documents/etf_tracking/Analysis/Summary_Statistics/prices_in_summ.csv")
+
+# returns
+ETF_r_in <- table_make_in("per_ETF_return")
+NAV_r_in <- table_make_in("per_NAV_return")
+
+returns_in <- rbind(ETF_r_in, NAV_r_in)
+write_csv(returns_in, "~/Documents/etf_tracking/Analysis/Summary_Statistics/returnss_in_summ.csv")
+

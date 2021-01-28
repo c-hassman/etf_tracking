@@ -38,13 +38,11 @@ TDa_weat <- lm(WEAT$per_ETF_return ~ WEAT$per_NAV_return)
 TDa_uso <- lm(USO$per_ETF_return ~ USO$per_NAV_return)
 TDa_uga <- lm(UGA$per_ETF_return ~ UGA$per_NAV_return)
 
-summary(TD_uga)
 
 t <- -19.8969
 df <- 2050
   
 2 * pt(t, df = df)
-
 se_calc <- function(model){
   k = length(model$coefficients)-1
   SSE = sum(model$residuals**2)
@@ -125,7 +123,48 @@ TDa <- cbind(TDa,  c(summary(TDa_corn)$r.squared, NA,
 
 write.csv(TDa, "~/Documents/etf_tracking/Analysis/MZ/TDa_results.csv")
 
+#### Graph Residuals ###########################################################
 
+# [-1] removes the first date (which contains na, so no residuals)
+
+par(mfrow = c(5, 3), mai = c(0.3, .65, 0.2, 0.05))
+# CORN
+plot(CORN$DATE[-1], TD_corn$residuals, type = "l", main = "TD Residuals",
+     xlab = "", ylab = "CORN")
+plot(CORN$DATE[-1], TDm_corn$residuals, type = "l", main = "TDm Residuals",
+     xlab = "", ylab = "")
+plot(CORN$DATE[-1], TDa_corn$residuals, type = "l", main = "TDa Residuals",
+     xlab = "", ylab = "")
+# SOYB 
+plot(SOYB$DATE[-1], TD_soyb$residuals, type = "l", main = "",
+     xlab = "", ylab = "SOYB")
+plot(SOYB$DATE[-1], TDm_soyb$residuals, type = "l", main = "",
+     xlab = "", ylab = "")
+plot(SOYB$DATE[-1], TDa_soyb$residuals, type = "l", main = "",
+     xlab = "", ylab = "")
+#WEAT
+plot(WEAT$DATE[-1], TD_weat$residuals, type = "l", main = "",
+     xlab = "", ylab = "WEAT")
+plot(WEAT$DATE[-1], TDm_weat$residuals, type = "l", main = "",
+     xlab = "", ylab = "")
+plot(WEAT$DATE[-1], TDa_weat$residuals, type = "l", main = "",
+     xlab = "", ylab = "")
+#USO
+plot(USO$DATE[-1], TD_uso$residuals, type = "l", main = "", 
+     xlab = "", ylab = "USO") 
+plot(USO$DATE[-1], TDm_uso$residuals, type = "l", main = "", 
+     xlab = "", ylab = "") 
+plot(USO$DATE[-1], TDa_uso$residuals , type = "l", main = "", 
+     xlab = "", ylab = "") 
+# UGA
+plot(UGA$DATE[-1], TD_uga$residuals, type = "l", main = "",
+     xlab = "", ylab = "UGA") 
+plot(UGA$DATE[-1], TDm_uga$residuals, type = "l", main = "",
+     xlab = "", ylab = "") 
+plot(UGA$DATE[-1], TDa_uga$residuals, type = "l", main = "",
+     xlab = "", ylab = "") 
+
+dev.off()
 
 
 
