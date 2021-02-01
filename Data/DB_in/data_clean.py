@@ -22,6 +22,7 @@ from parse_dates import parse_dates
 roll_path = "/home/colburn/Documents/etf_tracking/Data/Aux/Roll_Dates/"
 ohlv_path = "/home/colburn/Documents/etf_tracking/Data/Aux/OHLV/"
 flow_path = "/home/colburn/Documents/etf_tracking/Data/Aux/Fund_Flow/"
+spy_path = "/home/colburn/Documents/etf_tracking/Data/Aux/SPY_Data.csv"
 
 def import_data(ETF_ticker):
     # define sheet names
@@ -129,8 +130,21 @@ def pull_flow(data_df, flow_file):
     data_df = pd.concat([data_df, flow_df], axis = 1, join = "inner")
     return(data_df)
     
+def pull_spy(data_df):
+    #open spy file
+    spy_df = pd.read_csv(spy_path)
+    # Conver date from character to date time
+    spy_df['Date'] = pd.to_datetime(spy_df['Date'])
+    # set date as index
+    spy_df = spy_df.set_index("Date")
+    # Calculate Volatility
+    spy_df['SPY_Vol'] = round((spy_df['SPY High'] - spy_df['SPY Low']) / spy_df['SPY Close'] * 100 ,5)
+    # Add Volatility to data
+    data_df = pd.concat([data_df, spy_df['SPY_Vol']], axis = 1, join = "inner")
+    return(data_df)
 
 def main():
+    
     # CORN
     print("Importing CORN...")
     CORN_NAV, CORN_price = import_data("CORN") # call import and unpack list
@@ -146,6 +160,8 @@ def main():
     CORN_df = pull_ohlc(CORN_df, "CORN_OHLV.csv")
     print("Adding SOYB Fund Flow Data")
     CORN_df = pull_flow(CORN_df, "corn_flow.csv")
+    print("Adding SP500 Volatility")
+    CORN_df = pull_spy(CORN_df)
     print("Writing CORN to CSV")
     CORN_df.to_csv("CORN_in.csv", index_label = "Date")
     
@@ -165,6 +181,8 @@ def main():
     SOYB_df = pull_ohlc(SOYB_df, "SOYB_OHLV.csv")
     print("Adding SOYB Fund Flow Data")
     SOYB_df = pull_flow(SOYB_df, "soyb_flow.csv")
+    print("Adding SP500 Volatility")
+    SOYB_df = pull_spy(SOYB_df)
     print("Writing SOYB to CSV")
     SOYB_df.to_csv("SOYB_in.csv", index_label = "Date")
     
@@ -183,6 +201,8 @@ def main():
     WEAT_df = pull_ohlc(WEAT_df, "WEAT_OHLV.csv")
     print("Adding WEAT Fund Flow Data")
     WEAT_df = pull_flow(WEAT_df, "weat_flow.csv")
+    print("Adding SP500 Volatility")
+    WEAT_df = pull_spy(WEAT_df)
     print("Writing WEAT to CSV")
     WEAT_df.to_csv("WEAT_in.csv", index_label = "Date")
     
@@ -201,6 +221,8 @@ def main():
     USO_df = pull_oil_ohlc(USO_df, "USO_OHLV.csv")
     print("Adding Fund USO Flow Data")
     USO_df = pull_flow(USO_df, "uso_flow.csv")
+    print("Adding SP500 Volatility")
+    USO_df = pull_spy(USO_df)
     print("Writing USO to CSV")
     USO_df.to_csv("USO_in.csv", index_label = "Date")
     
@@ -219,6 +241,8 @@ def main():
     UGA_df = pull_ohlc(UGA_df, "UGA_OHLV.csv")
     print("Adding UGA Fund Flow Data")
     UGA_df = pull_flow(UGA_df, "uga_flow.csv")
+    print("Adding SP500 Volatility")
+    UGA_df = pull_spy(UGA_df)
     print("Writing UGA to CSV")
     UGA_df.to_csv("UGA_in.csv", index_label = "Date")
 
