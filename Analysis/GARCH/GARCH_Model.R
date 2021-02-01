@@ -63,19 +63,32 @@ corn_ext <- as.matrix(data.frame(Volatility = CORN$Volatility,
                                  Volume = log(CORN$Volume),
                                  Roll = CORN$Roll))
 soyb_ext <- as.matrix(data.frame(Volatility = SOYB$Volatility, 
-                                 #Volume = log(SOYB$Volume),
+                                 Volume = log(SOYB$Volume),
                                  Roll = SOYB$Roll))
 weat_ext <- as.matrix(data.frame(Volatility = WEAT$Volatility, 
-                                 #Volume = log(WEAT$Volume),
+                                 Volume = log(WEAT$Volume),
                                  Roll = WEAT$Roll))
 uso_ext <- as.matrix(data.frame(Volatility = USO$Volatility, 
-                                 #Volume = log(USO$Volume),
+                                 Volume = log(USO$Volume),
                                  Roll = USO$Roll))
 uga_ext <- as.matrix(data.frame(Volatility = UGA$Volatility, 
-                                 #Volume = log(UGA$Volume),
+                                 Volume = log(UGA$Volume),
                                  Roll = UGA$Roll))
 
+corn_corr <- cor(corn_ext)
+round(corn_corr, 2)
 
+soyb_corr <- cor(soyb_ext)
+round(soyb_corr, 2)
+
+weat_corr <- cor(weat_ext)
+round(weat_corr, 2)
+
+uso_corr <- cor(uso_ext)
+round(uso_corr, 2)
+
+uga_corr <- cor(uga_ext)
+round(uga_corr, 2)
 
 
 # Define Full GARCH Model
