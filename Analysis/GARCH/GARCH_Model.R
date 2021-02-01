@@ -40,16 +40,22 @@ UGA_base
 ####### Full Model #############################################################
 
 ###### External Regressors
-plot(log(CORN$Volume), CORN$Volatility)
 
-a <- lm(log(CORN$Volume) ~ CORN$Volatility)
-summary(a)
+corn_out <- c(CORN$Date, CORN$TDa, CORN$Volatility, CORN$Volume, CORN$Roll)
 
-plot(log(SOYB$Volume), SOYB$Volatility)
-plot(log(USO$Volume), log(USO$Volatility))
-plot(log(UGA$Volume), log(UGA$Volatility))
+corn_out <- CORN[c("Date", "TDa", "Volatility", "Volume", "Roll")]
+soyb_out <- SOYB[c("Date", "TDa", "Volatility", "Volume", "Roll")]
+weat_out <- WEAT[c("Date", "TDa", "Volatility", "Volume", "Roll")]
+uso_out <- USO[c("Date", "TDa", "Volatility", "Volume", "Roll")]
+uga_out <- UGA[c("Date", "TDa", "Volatility", "Volume", "Roll")]
 
-plot(log(CORN$Volatility), log(CORN$Volume))
+
+write.csv(corn_out, "corn.csv")
+write.csv(soyb_out, "soyb.csv")
+write.csv(weat_out, "weat.csv")
+write.csv(uso_out, "uso.csv")
+write.csv(uga_out, "uga.csv")
+
 
 # CORN
 # Create a data frame of the relevant variables then convert to matrix
@@ -57,16 +63,16 @@ corn_ext <- as.matrix(data.frame(Volatility = CORN$Volatility,
                                  Volume = log(CORN$Volume),
                                  Roll = CORN$Roll))
 soyb_ext <- as.matrix(data.frame(Volatility = SOYB$Volatility, 
-                                 Volume = log(SOYB$Volume),
+                                 #Volume = log(SOYB$Volume),
                                  Roll = SOYB$Roll))
 weat_ext <- as.matrix(data.frame(Volatility = WEAT$Volatility, 
-                                 Volume = log(WEAT$Volume),
+                                 #Volume = log(WEAT$Volume),
                                  Roll = WEAT$Roll))
 uso_ext <- as.matrix(data.frame(Volatility = USO$Volatility, 
-                                 Volume = log(USO$Volume),
+                                 #Volume = log(USO$Volume),
                                  Roll = USO$Roll))
 uga_ext <- as.matrix(data.frame(Volatility = UGA$Volatility, 
-                                 Volume = log(UGA$Volume),
+                                 #Volume = log(UGA$Volume),
                                  Roll = UGA$Roll))
 
 
@@ -106,7 +112,9 @@ uga_full_spec <- ugarchspec(variance.model = list(garchOrder = c(1,1),
                             distribution.model = 'std')
 
 #Calculate Full
+
 CORN_full <- ugarchfit(data = CORN$TDa, spec = corn_full_spec, solver = 'hybrid')
+
 SOYB_full <- ugarchfit(data = SOYB$TDa, spec = soyb_full_spec, solver = 'hybrid')
 WEAT_full <- ugarchfit(data = WEAT$TDa, spec = weat_full_spec, solver = 'hybrid')
 USO_full <- ugarchfit(data = USO$TDa, spec = uso_full_spec, solver = 'hybrid')
@@ -118,4 +126,4 @@ WEAT_full
 USO_full
 UGA_full
 
-
+CORN_full
