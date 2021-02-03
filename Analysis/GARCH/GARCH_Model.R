@@ -18,6 +18,9 @@ UGA <- na.omit(data_pull_in("UGA"))
 
 
 ######### Base Model ###########################################################
+
+# Omega is the variance intercept value
+
 # Define Base GARCH Model
 base_spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
                         mean.model = list(armaOrder = c(0,0), include.mean = FALSE),
@@ -39,56 +42,36 @@ UGA_base
 
 ####### Full Model #############################################################
 
+
+plot(CORN$Volatility, CORN$SPY_Vol)
+plot(USO$Volatility, USO$SPY_Vol)
+
 ###### External Regressors
-
-corn_out <- c(CORN$Date, CORN$TDa, CORN$Volatility, CORN$Volume, CORN$Roll)
-
-corn_out <- CORN[c("Date", "TDa", "Volatility", "Volume", "Roll")]
-soyb_out <- SOYB[c("Date", "TDa", "Volatility", "Volume", "Roll")]
-weat_out <- WEAT[c("Date", "TDa", "Volatility", "Volume", "Roll")]
-uso_out <- USO[c("Date", "TDa", "Volatility", "Volume", "Roll")]
-uga_out <- UGA[c("Date", "TDa", "Volatility", "Volume", "Roll")]
-
-
-write.csv(corn_out, "corn.csv")
-write.csv(soyb_out, "soyb.csv")
-write.csv(weat_out, "weat.csv")
-write.csv(uso_out, "uso.csv")
-write.csv(uga_out, "uga.csv")
 
 
 # CORN
 # Create a data frame of the relevant variables then convert to matrix
 corn_ext <- as.matrix(data.frame(Volatility = CORN$Volatility, 
-                                 Volume = log(CORN$Volume),
+                                 #Volume = log(CORN$Volume),
+                                # SPY_Vol = CORN$SPY_Vol,
                                  Roll = CORN$Roll))
 soyb_ext <- as.matrix(data.frame(Volatility = SOYB$Volatility, 
-                                 Volume = log(SOYB$Volume),
+                                 #Volume = log(SOYB$Volume),
+                                 #SPY_Vol = SOYB$SPY_Vol,
                                  Roll = SOYB$Roll))
 weat_ext <- as.matrix(data.frame(Volatility = WEAT$Volatility, 
-                                 Volume = log(WEAT$Volume),
+                                 #Volume = log(WEAT$Volume),
+                                 #SPY_Vol = WEAT$SPY_Vol,
                                  Roll = WEAT$Roll))
 uso_ext <- as.matrix(data.frame(Volatility = USO$Volatility, 
-                                 Volume = log(USO$Volume),
+                                 #Volume = log(USO$Volume),
+                                 #SPY_Vol = USO$SPY_Vol,
                                  Roll = USO$Roll))
 uga_ext <- as.matrix(data.frame(Volatility = UGA$Volatility, 
-                                 Volume = log(UGA$Volume),
+                                 #Volume = log(UGA$Volume),
+                                #SPY_Vol = UGA$SPY_Vol,
                                  Roll = UGA$Roll))
 
-corn_corr <- cor(corn_ext)
-round(corn_corr, 2)
-
-soyb_corr <- cor(soyb_ext)
-round(soyb_corr, 2)
-
-weat_corr <- cor(weat_ext)
-round(weat_corr, 2)
-
-uso_corr <- cor(uso_ext)
-round(uso_corr, 2)
-
-uga_corr <- cor(uga_ext)
-round(uga_corr, 2)
 
 
 # Define Full GARCH Model

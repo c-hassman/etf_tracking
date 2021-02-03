@@ -81,12 +81,10 @@ def pull_ohlc(data_df, ohlv_file):
     ohlv_df = ohlv_df.set_index("Date")
     # Keep only date from timestamp
     ohlv_df.index = ohlv_df.index.date
-    # Remove umnecessary Close and Turnover columns
-    ohlv_df = ohlv_df.drop(['Close', 'Turnover'], axis = 1)
-    # Combine new and old data
-    data_df = pd.concat([data_df, ohlv_df], axis = 1, join = "inner")
     # Calculate Volatility
-    data_df['Volatility'] = round(((data_df['High'] - data_df['Low'])/data_df['Price']) * 100, 5)
+    ohlv_df['Volatility'] = round(((ohlv_df['High'] - ohlv_df['Low'])/ohlv_df['Close']) * 100, 5)
+    # Combine new and old data
+    data_df = pd.concat([data_df, ohlv_df['Volatility'], ohlv_df['Volume']], axis = 1, join = "inner")
     # Drop commas from volume
     data_df['Volume'] = data_df['Volume'].replace(",", "", regex = True)
     return(data_df)
@@ -105,12 +103,10 @@ def pull_oil_ohlc(data_df, ohlv_file):
     ohlv_df = ohlv_df.set_index("Date")
     # Keep only date from timestamp
     ohlv_df.index = ohlv_df.index.date
-    # Remove umnecessary Close and Turnover columns
-    ohlv_df = ohlv_df.drop(['Close', 'Turnover'], axis = 1)
-    # Combine new and old data
-    data_df = pd.concat([data_df, ohlv_df], axis = 1, join = "inner")
     # Calculate Volatility
-    data_df['Volatility'] = round(((data_df['High'] - data_df['Low'])/data_df['Price']) * 100, 5)
+    ohlv_df['Volatility'] = round(((ohlv_df['High'] - ohlv_df['Low'])/ohlv_df['Close']) * 100, 5)
+    # Combine new and old data
+    data_df = pd.concat([data_df, ohlv_df['Volatility'], ohlv_df['Volume']], axis = 1, join = "inner")
     # Drop commas from volume
     data_df['Volume'] = data_df['Volume'].replace(",", "", regex = True)
     return(data_df)
@@ -143,6 +139,11 @@ def pull_spy(data_df):
     data_df = pd.concat([data_df, spy_df['SPY_Vol']], axis = 1, join = "inner")
     return(data_df)
 
+def trim(data_df, start, end):
+    data_df.index = pd.to_datetime(data_df.index)
+    data_df = data_df.loc[start:end]
+    return data_df
+
 def main():
     
     # CORN
@@ -158,13 +159,11 @@ def main():
     CORN_df = add_rolls(CORN_df, roll_file)
     print("Adding CORN OHLV Data")
     CORN_df = pull_ohlc(CORN_df, "CORN_OHLV.csv")
-    print("Adding SOYB Fund Flow Data")
-    CORN_df = pull_flow(CORN_df, "corn_flow.csv")
-    print("Adding SP500 Volatility")
-    CORN_df = pull_spy(CORN_df)
+    print("Trimming CORN")
+    CORN_df = trim(CORN_df, "2012-01-04", "2020-07-10")
     print("Writing CORN to CSV")
     CORN_df.to_csv("CORN_in.csv", index_label = "Date")
-    
+
    
     # SOYB
     print("Importing SOYB...")
@@ -179,10 +178,8 @@ def main():
     SOYB_df = add_rolls(SOYB_df, roll_file)
     print("Adding OHLV Data")
     SOYB_df = pull_ohlc(SOYB_df, "SOYB_OHLV.csv")
-    print("Adding SOYB Fund Flow Data")
-    SOYB_df = pull_flow(SOYB_df, "soyb_flow.csv")
-    print("Adding SP500 Volatility")
-    SOYB_df = pull_spy(SOYB_df)
+    print("Trimming SOYB")
+    SOYB_df = trim(SOYB_df, "2012-01-04", "2020-07-10")
     print("Writing SOYB to CSV")
     SOYB_df.to_csv("SOYB_in.csv", index_label = "Date")
     
@@ -199,10 +196,8 @@ def main():
     WEAT_df = add_rolls(WEAT_df, roll_file)
     print("Adding WEAT OHLV Data")
     WEAT_df = pull_ohlc(WEAT_df, "WEAT_OHLV.csv")
-    print("Adding WEAT Fund Flow Data")
-    WEAT_df = pull_flow(WEAT_df, "weat_flow.csv")
-    print("Adding SP500 Volatility")
-    WEAT_df = pull_spy(WEAT_df)
+    print("Trimming WEAT")
+    WEAT_df = trim(WEAT_df, "2012-01-04", "2020-07-10")
     print("Writing WEAT to CSV")
     WEAT_df.to_csv("WEAT_in.csv", index_label = "Date")
     
@@ -219,10 +214,8 @@ def main():
     USO_df = add_rolls(USO_df, roll_file)
     print("Adding USO OHLV Data")
     USO_df = pull_oil_ohlc(USO_df, "USO_OHLV.csv")
-    print("Adding Fund USO Flow Data")
-    USO_df = pull_flow(USO_df, "uso_flow.csv")
-    print("Adding SP500 Volatility")
-    USO_df = pull_spy(USO_df)
+    print("Trimming USO")
+    USO_df = trim(USO_df, "2013-07-15", "2020-01-29")
     print("Writing USO to CSV")
     USO_df.to_csv("USO_in.csv", index_label = "Date")
     
@@ -239,10 +232,8 @@ def main():
     UGA_df = add_rolls(UGA_df, roll_file)
     print("Adding UGA OHLV Data")
     UGA_df = pull_ohlc(UGA_df, "UGA_OHLV.csv")
-    print("Adding UGA Fund Flow Data")
-    UGA_df = pull_flow(UGA_df, "uga_flow.csv")
-    print("Adding SP500 Volatility")
-    UGA_df = pull_spy(UGA_df)
+    print("Trimming UGA")
+    UGA_df = trim(UGA_df, "2012-01-04", "2020-07-10")
     print("Writing UGA to CSV")
     UGA_df.to_csv("UGA_in.csv", index_label = "Date")
 
