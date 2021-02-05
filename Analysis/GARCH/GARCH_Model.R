@@ -17,6 +17,24 @@ USO <- na.omit(data_pull_in("USO"))
 UGA <- na.omit(data_pull_in("UGA"))
 
 
+### Important: we are using non systematic TDa. What is included in 
+# data_pull_in is systematic TDa. I overwrite it using this function:
+
+non_sys <- function(data){
+  model <- lm(data$Price ~ data$NAV)
+  data$TDa <- model$residuals
+  data <- as.data.frame(data)
+  return(data)
+}
+
+CORN <- non_sys(CORN)
+SOYB <- non_sys(SOYB)
+WEAT <- non_sys(WEAT)
+USO <- non_sys(USO)
+UGA <- non_sys(UGA)
+
+
+
 ######### Base Model ###########################################################
 
 # Omega is the variance intercept value
@@ -40,11 +58,10 @@ USO_base
 UGA_base
 
 
+
 ####### Full Model #############################################################
 
 
-plot(CORN$Volatility, CORN$SPY_Vol)
-plot(USO$Volatility, USO$SPY_Vol)
 
 ###### External Regressors
 
@@ -122,4 +139,77 @@ WEAT_full
 USO_full
 UGA_full
 
-CORN_full
+
+# Make Results Table
+
+## Come back to#
+ETFs <- c("CORN", "", "SOYB", "", "WEAT", "", "USO", "", "UGA", "")
+vari <- rep(c("Coef", "COEF_SE"), 5)
+results <- data.frame("ETF"= ETFs, 
+                           "Variables" = vari)
+
+
+temp <- cbind(CORN_base@fit[['coef']], CORN_base@fit[['se.coef']],
+              SOYB_base@fit[['coef']], SOYB_base@fit[['se.coef']],
+              WEAT_base@fit[['coef']], WEAT_base@fit[['se.coef']],
+              USO_base@fit[['coef']], USO_base@fit[['se.coef']],
+              UGA_base@fit[['coef']], UGA_base@fit[['se.coef']])
+
+AIC <- rbind(infocriteria(CORN_base)[1], "",
+             infocriteria(SOYB_base)[1], "",
+             infocriteria(WEAT_base)[1], "",
+             infocriteria(USO_base)[1], "",
+             infocriteria(UGA_base)[1], "")
+
+base_results <- cbind(base_results, temp)
+base_results$AIC <- AIC
+
+
+full_results <- data.frame("ETF"= ETFs, 
+                           "Variables" = vari)
+
+
+temp_full <- rbind(CORN_full@fit[['coef']], CORN_full@fit[['se.coef']],
+              SOYB_full@fit[['coef']], SOYB_full@fit[['se.coef']],
+              WEAT_full@fit[['coef']], WEAT_full@fit[['se.coef']],
+              USO_full@fit[['coef']], USO_full@fit[['se.coef']],
+              UGA_full@fit[['coef']], UGA_full@fit[['se.coef']])
+
+AIC_full <- rbind(infocriteria(CORN_full)[1], "",
+             infocriteria(SOYB_full)[1], "",
+             infocriteria(WEAT_full)[1], "",
+             infocriteria(USO_full)[1], "",
+             infocriteria(UGA_full)[1], "")
+
+full_results <- cbind(full_results, temp_full)
+full_results$AIC <- AIC_full
+
+write_csv(full_results, "~/Documents/etf_tracking/Analysis/GARCH/garch_results.csv")
+
+### Plot Conditional Variance ##
+par(mfrow = c(5, 2), mai = c(0.3, .65, 0.2, 0.05))
+plot(CORN$Date, CORN_base@fit$sigma , type = "l", main = "Base Model",
+     xlab = "", ylab = "CORN")
+plot(CORN$Date, CORN_full@fit$sigma , type = "l", main = "Full Model",
+     xlab = "", ylab = "")
+
+plot(SOYB$Date, SOYB_base@fit$sigma , type = "l",
+     xlab = "", ylab = "SOYB")
+plot(SOYB$Date, SOYB_full@fit$sigma , type = "l",
+     xlab = "", ylab = "")
+
+plot(WEAT$Date, WEAT_base@fit$sigma , type = "l",
+     xlab = "", ylab = "WEAT")
+plot(WEAT$Date, WEAT_full@fit$sigma , type = "l",
+     xlab = "", ylab = "")
+
+plot(USO$Date, USO_base@fit$sigma , type = "l",
+     xlab = "", ylab = "USO")
+plot(USO$Date, USO_full@fit$sigma , type = "l",
+     xlab = "", ylab = "")
+
+plot(UGA$Date, UGA_base@fit$sigma , type = "l", 
+     xlab = "", ylab = "UGA")
+plot(UGA$Date, UGA_full@fit$sigma , type = "l",
+     xlab = "", ylab = "")
+dev.off()
