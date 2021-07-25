@@ -22,7 +22,11 @@ from parse_dates import parse_dates
 roll_path = "/home/colburn/Documents/etf_tracking/Data/Aux/Roll_Dates/"
 ohlv_path = "/home/colburn/Documents/etf_tracking/Data/Aux/OHLV/"
 flow_path = "/home/colburn/Documents/etf_tracking/Data/Aux/Fund_Flow/"
-spy_path = "/home/colburn/Documents/etf_tracking/Data/Aux/SPY_Data.csv"
+spy_path = "/home/colburn/Documents/etf_tracking/Data/Aux/sp500.csv"
+bcomen_path = "/home/colburn/Documents/etf_tracking/Data/Aux/BCOMEN.csv"
+bcomag_path = "/home/colburn/Documents/etf_tracking/Data/Aux/BCOMAG.csv"
+
+
 
 def import_data(ETF_ticker):
     # define sheet names
@@ -126,18 +130,38 @@ def pull_flow(data_df, flow_file):
     data_df = pd.concat([data_df, flow_df], axis = 1, join = "inner")
     return(data_df)
     
-def pull_spy(data_df):
+
+def pull_aux(data_df, aux_path, aux_name):
+    """
+    Pull in auxilary data, transforms it to a volatility, and append 
+    to primary DataFrame
+    
+    Parameters
+    ----------
+    data_df : Primary Data Frame which the auxillary data will be appended
+    aux_path : File path for auxillary data, defined at the top
+    name : A string that describes the auxillary data: for example "SP500" or
+        "BCOMEN"
+
+    Returns
+    -------
+    DataFrame with appended data
+
+    """
     #open spy file
-    spy_df = pd.read_csv(spy_path)
+    aux_df = pd.read_csv(aux_path)
     # Conver date from character to date time
-    spy_df['Date'] = pd.to_datetime(spy_df['Date'])
+    aux_df['Date'] = pd.to_datetime(aux_df['Date'])
     # set date as index
-    spy_df = spy_df.set_index("Date")
+    aux_df = aux_df.set_index("Date")
     # Calculate Volatility
-    spy_df['SPY_Vol'] = round((spy_df['SPY High'] - spy_df['SPY Low']) / spy_df['SPY Close'] * 100 ,5)
+    aux_df[aux_name] = round((aux_df['High'] - aux_df['Low']) / aux_df['Close'] * 100 ,5)
+    # This is causing big problems... need to sort data before combining
+    aux_df.sort_index(inplace = True)
     # Add Volatility to data
-    data_df = pd.concat([data_df, spy_df['SPY_Vol']], axis = 1, join = "inner")
+    data_df = pd.concat([data_df, aux_df[aux_name]], axis = 1, join = "inner")
     return(data_df)
+
 
 def trim(data_df, start, end):
     data_df.index = pd.to_datetime(data_df.index)
@@ -159,12 +183,19 @@ def main():
     CORN_df = add_rolls(CORN_df, roll_file)
     print("Adding CORN OHLV Data")
     CORN_df = pull_ohlc(CORN_df, "CORN_OHLV.csv")
+    print("Adding SP500, BCOM Subindex Vol")
+    CORN_df = pull_aux(CORN_df, spy_path, "SP500_Vol")
+    CORN_df = pull_aux(CORN_df, bcomag_path, "BCOMAG_Vol")
+    CORN_df = pull_aux(CORN_df, bcomen_path, "BCOMEN_Vol")
     print("Trimming CORN")
     CORN_df = trim(CORN_df, "2012-01-04", "2020-07-10")
     print("Writing CORN to CSV")
     CORN_df.to_csv("CORN_in.csv", index_label = "Date")
 
-   
+    
+
+
+
     # SOYB
     print("Importing SOYB...")
     SOYB_NAV, SOYB_price = import_data("SOYB") # call import and unpack list
@@ -178,6 +209,10 @@ def main():
     SOYB_df = add_rolls(SOYB_df, roll_file)
     print("Adding OHLV Data")
     SOYB_df = pull_ohlc(SOYB_df, "SOYB_OHLV.csv")
+    print("Adding SP500, BCOM Subindex Vol")
+    SOYB_df = pull_aux(SOYB_df, spy_path, "SP500_Vol")
+    SOYB_df = pull_aux(SOYB_df, bcomag_path, "BCOMAG_Vol")
+    SOYB_df = pull_aux(SOYB_df, bcomen_path, "BCOMEN_Vol")
     print("Trimming SOYB")
     SOYB_df = trim(SOYB_df, "2012-01-04", "2020-07-10")
     print("Writing SOYB to CSV")
@@ -196,6 +231,10 @@ def main():
     WEAT_df = add_rolls(WEAT_df, roll_file)
     print("Adding WEAT OHLV Data")
     WEAT_df = pull_ohlc(WEAT_df, "WEAT_OHLV.csv")
+    print("Adding SP500, BCOM Subindex Vol")
+    WEAT_df = pull_aux(WEAT_df, spy_path, "SP500_Vol")
+    WEAT_df = pull_aux(WEAT_df, bcomag_path, "BCOMAG_Vol")
+    WEAT_df = pull_aux(WEAT_df, bcomen_path, "BCOMEN_Vol")
     print("Trimming WEAT")
     WEAT_df = trim(WEAT_df, "2012-01-04", "2020-07-10")
     print("Writing WEAT to CSV")
@@ -214,6 +253,10 @@ def main():
     USO_df = add_rolls(USO_df, roll_file)
     print("Adding USO OHLV Data")
     USO_df = pull_oil_ohlc(USO_df, "USO_OHLV.csv")
+    print("Adding SP500, BCOM Subindex Vol")
+    USO_df = pull_aux(USO_df, spy_path, "SP500_Vol")
+    USO_df = pull_aux(USO_df, bcomag_path, "BCOMAG_Vol")
+    USO_df = pull_aux(USO_df, bcomen_path, "BCOMEN_Vol")
     print("Trimming USO")
     USO_df = trim(USO_df, "2013-07-15", "2020-01-29")
     print("Writing USO to CSV")
@@ -232,6 +275,10 @@ def main():
     UGA_df = add_rolls(UGA_df, roll_file)
     print("Adding UGA OHLV Data")
     UGA_df = pull_ohlc(UGA_df, "UGA_OHLV.csv")
+    print("Adding SP500, BCOM Subindex Vol")
+    UGA_df = pull_aux(UGA_df, spy_path, "SP500_Vol")
+    UGA_df = pull_aux(UGA_df, bcomag_path, "BCOMAG_Vol")
+    UGA_df = pull_aux(UGA_df, bcomen_path, "BCOMEN_Vol")
     print("Trimming UGA")
     UGA_df = trim(UGA_df, "2012-01-04", "2020-07-10")
     print("Writing UGA to CSV")

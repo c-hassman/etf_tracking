@@ -7,7 +7,9 @@
 
 
 
-source("~/Documents/etf_tracking/Analysis/preprocessing.R")
+# source("~/Documents/etf_tracking/Analysis/preprocessing.R")
+source("/home/colburn/Documents/etf_tracking/Analysis/preprocessing.R")
+
 CORN <- data_pull_ex("CORN")
 SOYB <- data_pull_ex("SOYB")
 WEAT <- data_pull_ex("WEAT")
