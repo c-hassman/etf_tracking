@@ -35,21 +35,45 @@ UGA <- non_sys(UGA)
 
 
 
+# UPDATE THIS TO REGRESS on off the other. 
+
 ######### Base Model ###########################################################
 
 # Omega is the variance intercept value
 
 # Define Base GARCH Model
-base_spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
-                        mean.model = list(armaOrder = c(0,0), include.mean = FALSE),
+c_base_spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                        mean.model = list(armaOrder = c(0,0), 
+                                          external.regressors = as.matrix(CORN$per_NAV_return), 
+                                          include.mean = TRUE),
                         distribution.model = 'std')
+s_base_spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(0,0), 
+                                            external.regressors = as.matrix(SOYB$per_NAV_return), 
+                                            include.mean = TRUE),
+                          distribution.model = 'std')
+w_base_spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(0,0), 
+                                            external.regressors = as.matrix(WEAT$per_NAV_return), 
+                                            include.mean = TRUE),
+                          distribution.model = 'std')
+o_base_spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(0,0), 
+                                            external.regressors = as.matrix(USO$per_NAV_return), 
+                                            include.mean = TRUE),
+                          distribution.model = 'std')
+g_base_spec <- ugarchspec(variance.model = list(garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(0,0), 
+                                            external.regressors = as.matrix(UGA$per_NAV_return), 
+                                            include.mean = TRUE),
+                          distribution.model = 'std')
 
 #Calculate Base
-CORN_base <- ugarchfit(data = CORN$TDa, spec = base_spec, solver = 'hybrid')
-SOYB_base <- ugarchfit(data = SOYB$TDa, spec = base_spec, solver = 'hybrid')
-WEAT_base <- ugarchfit(data = WEAT$TDa, spec = base_spec, solver = 'hybrid')
-USO_base <- ugarchfit(data = USO$TDa, spec = base_spec, solver = 'hybrid')
-UGA_base <- ugarchfit(data = UGA$TDa, spec = base_spec, solver = 'hybrid')
+CORN_base <- ugarchfit(data = CORN$per_ETF_return, spec = c_base_spec, solver = 'hybrid')
+SOYB_base <- ugarchfit(data = SOYB$per_ETF_return, spec = base_spec, solver = 'hybrid')
+WEAT_base <- ugarchfit(data = WEAT$per_ETF_return, spec = base_spec, solver = 'hybrid')
+USO_base <- ugarchfit(data = USO$per_ETF_return, spec = base_spec, solver = 'hybrid')
+UGA_base <- ugarchfit(data = UGA$per_ETF_return, spec = base_spec, solver = 'hybrid')
 
 CORN_base
 SOYB_base
@@ -69,25 +93,49 @@ UGA_base
 # CORN
 # Create a data frame of the relevant variables then convert to matrix
 corn_ext <- as.matrix(data.frame(Volatility = CORN$Volatility, 
-                                 #Volume = log(CORN$Volume),
-                                # SPY_Vol = CORN$SPY_Vol,
-                                 Roll = CORN$Roll))
+                                 bcom = CORN$BCOM_Vol,
+                                #energy = CORN$BCOMEN_Vol,
+                                #ag = CORN$BCOMAG_Vol,
+                                spy = CORN$SP500_Vol,
+                                #Volume = log(CORN$Volume),
+                                #flow = (CORN$per_flow),
+                                Roll = CORN$Roll))
+
 soyb_ext <- as.matrix(data.frame(Volatility = SOYB$Volatility, 
+                                 bcom = SOYB$BCOM_Vol,
+                                 #energy = SOYB$BCOMEN_Vol,
+                                 #ag = SOYB$BCOMAG_Vol,
+                                 spy = SOYB$SP500_Vol,
                                  #Volume = log(SOYB$Volume),
-                                 #SPY_Vol = SOYB$SPY_Vol,
+                                 #flow = (SOYB$per_flow),
                                  Roll = SOYB$Roll))
+
 weat_ext <- as.matrix(data.frame(Volatility = WEAT$Volatility, 
+                                 bcom = WEAT$BCOM_Vol,
+                                 #energy = WEAT$BCOMEN_Vol,
+                                 #ag = WEAT$BCOMAG_Vol,
+                                 spy = WEAT$SP500_Vol,
                                  #Volume = log(WEAT$Volume),
-                                 #SPY_Vol = WEAT$SPY_Vol,
+                                 #flow = (WEAT$per_flow),
                                  Roll = WEAT$Roll))
+
 uso_ext <- as.matrix(data.frame(Volatility = USO$Volatility, 
-                                 #Volume = log(USO$Volume),
-                                 #SPY_Vol = USO$SPY_Vol,
-                                 Roll = USO$Roll))
+                                bcom = USO$BCOM_Vol,
+                                #energy = USO$BCOMEN_Vol,
+                                #ag = USO$BCOMAG_Vol,
+                                spy = USO$SP500_Vol,
+                                #Volume = log(USO$Volume),
+                                #flow = (USO$per_flow),
+                                Roll = USO$Roll))
+
 uga_ext <- as.matrix(data.frame(Volatility = UGA$Volatility, 
-                                 #Volume = log(UGA$Volume),
-                                #SPY_Vol = UGA$SPY_Vol,
-                                 Roll = UGA$Roll))
+                                bcom = UGA$BCOM_Vol,
+                                #energy = UGA$BCOMEN_Vol,
+                                #ag = UGA$BCOMAG_Vol,
+                                spy = UGA$SP500_Vol,
+                                #Volume = log(UGA$Volume),
+                                #flow = (UGA$per_flow),
+                                Roll = UGA$Roll))
 
 
 
@@ -97,41 +145,46 @@ uga_ext <- as.matrix(data.frame(Volatility = UGA$Volatility,
 corn_full_spec <- ugarchspec(variance.model = list(garchOrder = c(1,1), 
                                                    external.regressors = corn_ext),
                               mean.model = list(armaOrder = c(0,0), 
-                                                include.mean = FALSE),
+                                                external.regressors = as.matrix(CORN$per_NAV_return), 
+                                                include.mean = TRUE),
                               distribution.model = 'std')
 
 soyb_full_spec <- ugarchspec(variance.model = list(garchOrder = c(1,1),
                                                    external.regressors = soyb_ext),
                               mean.model = list(armaOrder = c(0,0), 
-                                                include.mean = FALSE),
+                                                external.regressors = as.matrix(SOYB$per_NAV_return), 
+                                                include.mean = TRUE),
                               distribution.model = 'std')
 
 weat_full_spec <- ugarchspec(variance.model = list(garchOrder = c(1,1),
                                                    external.regressors = weat_ext),
                               mean.model = list(armaOrder = c(0,0), 
-                                                include.mean = FALSE),
+                                                external.regressors = as.matrix(WEAT$per_NAV_return), 
+                                                include.mean = TRUE),
                               distribution.model = 'std')
 
 uso_full_spec <- ugarchspec(variance.model = list(garchOrder = c(1,1),
                                                   external.regressors = uso_ext),
                             mean.model = list(armaOrder = c(0,0), 
-                                              include.mean = FALSE),
+                                              external.regressors = as.matrix(USO$per_NAV_return), 
+                                              include.mean = TRUE),
                             distribution.model = 'std')
 
 uga_full_spec <- ugarchspec(variance.model = list(garchOrder = c(1,1),
                                                   external.regressors = uga_ext),
                             mean.model = list(armaOrder = c(0,0), 
-                                              include.mean = FALSE),
+                                              external.regressors = as.matrix(UGA$per_NAV_return), 
+                                              include.mean = TRUE),
                             distribution.model = 'std')
 
 #Calculate Full
 
-CORN_full <- ugarchfit(data = CORN$TDa, spec = corn_full_spec, solver = 'hybrid')
+CORN_full <- ugarchfit(data = CORN$per_ETF_return, spec = corn_full_spec, solver = 'hybrid')
 
-SOYB_full <- ugarchfit(data = SOYB$TDa, spec = soyb_full_spec, solver = 'hybrid')
-WEAT_full <- ugarchfit(data = WEAT$TDa, spec = weat_full_spec, solver = 'hybrid')
-USO_full <- ugarchfit(data = USO$TDa, spec = uso_full_spec, solver = 'hybrid')
-UGA_full <- ugarchfit(data = UGA$TDa, spec = uga_full_spec, solver = 'hybrid')
+SOYB_full <- ugarchfit(data = SOYB$per_ETF_return, spec = soyb_full_spec, solver = 'hybrid')
+WEAT_full <- ugarchfit(data = WEAT$per_ETF_return, spec = weat_full_spec, solver = 'hybrid')
+USO_full <- ugarchfit(data = USO$per_ETF_return, spec = uso_full_spec, solver = 'hybrid')
+UGA_full <- ugarchfit(data = UGA$per_ETF_return, spec = uga_full_spec, solver = 'hybrid')
 
 CORN_full
 SOYB_full

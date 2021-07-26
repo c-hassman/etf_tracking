@@ -25,6 +25,7 @@ flow_path = "/home/colburn/Documents/etf_tracking/Data/Aux/Fund_Flow/"
 spy_path = "/home/colburn/Documents/etf_tracking/Data/Aux/sp500.csv"
 bcomen_path = "/home/colburn/Documents/etf_tracking/Data/Aux/BCOMEN.csv"
 bcomag_path = "/home/colburn/Documents/etf_tracking/Data/Aux/BCOMAG.csv"
+bcom_path = "/home/colburn/Documents/etf_tracking/Data/Aux/BCOM.csv"
 
 
 
@@ -116,18 +117,22 @@ def pull_oil_ohlc(data_df, ohlv_file):
     return(data_df)
 
 def pull_flow(data_df, flow_file):
-    # Open flow file
+    # Open flow file 
     flow_df = pd.read_csv(flow_path + flow_file)
     # convert date from character to datetime
     flow_df['Date'] = pd.to_datetime(flow_df['Date'])
     # Set date as index
     flow_df = flow_df.set_index("Date")   
-    # For now, do not want Fund Assets
-    flow_df = flow_df.drop("FUND_TOTAL_ASSETS", axis = 1)
     # Keep only date from timestamp
     flow_df.index = flow_df.index.date
+    # Force Columns to Numeric
+    flow_df['FUND_FLOW'] = pd.to_numeric(flow_df['FUND_FLOW'], errors = "coerce")
+    flow_df['FUND_TOTAL_ASSETS'] = pd.to_numeric(flow_df['FUND_TOTAL_ASSETS'], errors = "coerce")
+    # Calaculate Fund flows as a percent of fund assets
+    flow_df["per_flow"] = (flow_df['FUND_FLOW'] / flow_df['FUND_TOTAL_ASSETS']) * 100
+    flow_df.sort_index(inplace = True)
     # Combine new and old data
-    data_df = pd.concat([data_df, flow_df], axis = 1, join = "inner")
+    data_df = pd.concat([data_df, flow_df['per_flow']], axis = 1, join = "inner")
     return(data_df)
     
 
@@ -187,8 +192,11 @@ def main():
     CORN_df = pull_aux(CORN_df, spy_path, "SP500_Vol")
     CORN_df = pull_aux(CORN_df, bcomag_path, "BCOMAG_Vol")
     CORN_df = pull_aux(CORN_df, bcomen_path, "BCOMEN_Vol")
+    CORN_df = pull_aux(CORN_df, bcom_path, "BCOM_Vol")
+    print("Adding Fund Flow")
+    CORN_df = pull_flow(CORN_df, "corn_flow.csv")
     print("Trimming CORN")
-    CORN_df = trim(CORN_df, "2012-01-04", "2020-07-10")
+    CORN_df = trim(CORN_df, "2013-02-04", "2020-07-10")
     print("Writing CORN to CSV")
     CORN_df.to_csv("CORN_in.csv", index_label = "Date")
 
@@ -213,8 +221,11 @@ def main():
     SOYB_df = pull_aux(SOYB_df, spy_path, "SP500_Vol")
     SOYB_df = pull_aux(SOYB_df, bcomag_path, "BCOMAG_Vol")
     SOYB_df = pull_aux(SOYB_df, bcomen_path, "BCOMEN_Vol")
+    SOYB_df = pull_aux(SOYB_df, bcom_path, "BCOM_Vol")
+    print("Adding Fund Flow")
+    SOYB_df = pull_flow(SOYB_df, "soyb_flow.csv")
     print("Trimming SOYB")
-    SOYB_df = trim(SOYB_df, "2012-01-04", "2020-07-10")
+    SOYB_df = trim(SOYB_df, "2013-02-04", "2020-07-10")
     print("Writing SOYB to CSV")
     SOYB_df.to_csv("SOYB_in.csv", index_label = "Date")
     
@@ -235,8 +246,11 @@ def main():
     WEAT_df = pull_aux(WEAT_df, spy_path, "SP500_Vol")
     WEAT_df = pull_aux(WEAT_df, bcomag_path, "BCOMAG_Vol")
     WEAT_df = pull_aux(WEAT_df, bcomen_path, "BCOMEN_Vol")
+    WEAT_df = pull_aux(WEAT_df, bcom_path, "BCOM_Vol")
+    print("Adding Fund Flow")
+    WEAT_df = pull_flow(WEAT_df, "weat_flow.csv")
     print("Trimming WEAT")
-    WEAT_df = trim(WEAT_df, "2012-01-04", "2020-07-10")
+    WEAT_df = trim(WEAT_df, "2013-02-04", "2020-07-10")
     print("Writing WEAT to CSV")
     WEAT_df.to_csv("WEAT_in.csv", index_label = "Date")
     
@@ -257,6 +271,9 @@ def main():
     USO_df = pull_aux(USO_df, spy_path, "SP500_Vol")
     USO_df = pull_aux(USO_df, bcomag_path, "BCOMAG_Vol")
     USO_df = pull_aux(USO_df, bcomen_path, "BCOMEN_Vol")
+    USO_df = pull_aux(USO_df, bcom_path, "BCOM_Vol")
+    print("Adding Fund Flow")
+    USO_df = pull_flow(USO_df, "uso_flow.csv")
     print("Trimming USO")
     USO_df = trim(USO_df, "2013-07-15", "2020-01-29")
     print("Writing USO to CSV")
@@ -279,8 +296,11 @@ def main():
     UGA_df = pull_aux(UGA_df, spy_path, "SP500_Vol")
     UGA_df = pull_aux(UGA_df, bcomag_path, "BCOMAG_Vol")
     UGA_df = pull_aux(UGA_df, bcomen_path, "BCOMEN_Vol")
+    UGA_df = pull_aux(UGA_df, bcom_path, "BCOM_Vol")
+    print("Adding Fund Flow")
+    UGA_df = pull_flow(UGA_df, "uga_flow.csv")
     print("Trimming UGA")
-    UGA_df = trim(UGA_df, "2012-01-04", "2020-07-10")
+    UGA_df = trim(UGA_df, "2013-02-01", "2020-07-10")
     print("Writing UGA to CSV")
     UGA_df.to_csv("UGA_in.csv", index_label = "Date")
 
